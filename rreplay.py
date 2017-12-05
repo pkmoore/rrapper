@@ -26,7 +26,14 @@ if __name__ == '__main__':
     lines = [x.strip().split(' ') for x in lines if re.match('EVENT: [0-9]+ PID: [0-9]+', x)]
     procs = [{'event': x[1], 'pid': x[3]} for x in lines]
     print(procs)
+    handles = []
     for i in procs:
-        syscallreplay.attach(int(i['pid']))
-        syscallreplay.sigcont(int(i['pid']))
-        syscallreplay.sigcont(int(i['pid']))
+        handles.append({'event': i['event'], 'handle': subprocess.Popen(['python', './inject.py', i['pid']])})
+
+    for h in handles:
+        if h['handle'].wait() != 0:
+            print('Injector for event {} failed'.format(h['event']))
+
+        #syscallreplay.attach(int(i['pid']))
+        #syscallreplay.sigcont(int(i['pid']))
+        #syscallreplay.sigcont(int(i['pid']))
