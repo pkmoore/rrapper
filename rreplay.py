@@ -6,7 +6,6 @@ import subprocess
 import re
 import ConfigParser
 import time
-from syscallreplay import syscallreplay
 
 
 if __name__ == '__main__':
@@ -28,12 +27,9 @@ if __name__ == '__main__':
     print(procs)
     handles = []
     for i in procs:
-        handles.append({'event': i['event'], 'handle': subprocess.Popen(['python', './inject.py', i['pid']])})
+        handles.append({'event': i['event'], 'handle': subprocess.Popen(['python', './inject.py', i['pid'], i['event']])})
 
     for h in handles:
         if h['handle'].wait() != 0:
             print('Injector for event {} failed'.format(h['event']))
 
-        #syscallreplay.attach(int(i['pid']))
-        #syscallreplay.sigcont(int(i['pid']))
-        #syscallreplay.sigcont(int(i['pid']))
