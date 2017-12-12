@@ -5,7 +5,7 @@ import logging
 from syscallreplay import syscallreplay
 from syscallreplay import file_handlers
 from syscallreplay import util
-
+from syscallreplay.util import ReplayDeltaError
 
 sys.path.append('posix-omni-parser/')
 import Trace
@@ -54,6 +54,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         119,  # sys_sigreturn
         126,  # sys_sigprocmask
         186,  # sys_sigaltstack
+        252,  # exit_group
         266,  # set_clock_getres
         240,  # sys_futex
         242,  # sys_sched_getaffinity
@@ -198,24 +199,29 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
 if __name__ == '__main__':
     pid = int(sys.argv[1])
     event = sys.argv[2]
-    trace = Trace.Trace(sys.argv[2] + '.strace')
+    trace = Trace.Trace(sys.argv[3])
     syscalls = trace.syscalls
-    syscall_index = 0
+    syscall_index = int(sys.argv[4])
+    syscall_index_end = int(sys.argv[5])
     # Requires kernel.yama.ptrace_scope = 0
     # in /etc/sysctl.d/10-ptrace.conf
     # on modern Ubuntu
     print("Injecting", pid)
     syscallreplay.attach(pid)
     syscallreplay.syscall(pid)
+    syscallreplay.syscall(pid)
     print("Continuing", pid)
     entering = True
-    result = os.waitpid(pid, 0)
-    print("initial wait:", os.WIFEXITED(result[1]))
-    while not os.WIFEXITED(result[1]):
-        syscallreplay.syscall(pid)
+    _, status = os.waitpid(pid, 0)
+    while not os.WIFEXITED(status):
         syscall_object = syscalls[syscall_index]
         handle_syscall(pid, syscallreplay.peek_register(pid, syscallreplay.ORIG_EAX), syscall_object, entering)
-        result = os.waitpid(pid, 0)
-        if entering:
+        if not entering:
             syscall_index += 1
         entering = not entering
+        syscallreplay.syscall(pid)
+        _, status = os.waitpid(pid, 0)
+    if syscall_index == syscall_index_end:
+        print('Completed the trace')
+    else:
+        print('Did not complete trace')
