@@ -209,6 +209,8 @@ if __name__ == '__main__':
     print("Injecting", pid)
     syscallreplay.attach(pid)
     syscallreplay.syscall(pid)
+    # We need an additional call to PTRACE_SYSCALL here in order to skip
+    # past an rr syscall buffering related injected system call
     syscallreplay.syscall(pid)
     print("Continuing", pid)
     entering = True

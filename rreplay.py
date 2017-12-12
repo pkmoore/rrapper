@@ -19,20 +19,23 @@ if __name__ == '__main__':
                          'trace_file': cfg.get(i, 'trace_file'),
                          'trace_start': cfg.get(i, 'trace_start'),
                          'trace_end': cfg.get(i, 'trace_end')})
+    events_str = ''
     for i in subjects:
-        # Add multiple event capability to rr
-        command = ['rr', 'replay', '-a', '-n', i['event']]
-        proc = subprocess.Popen(command, stdout=f, stderr=f)
+        events_str += i['event'] + ','
+    command = ['rr', 'replay', '-a', '-n', events_str]
+    proc = subprocess.Popen(command, stdout=f, stderr=f)
     time.sleep(3)
     f.close()
     f = open('proc.out', 'r')
     lines = f.readlines()
+    print(lines)
     lines = [x.strip().split(' ') for x in lines if re.match('EVENT: [0-9]+ PID: [0-9]+', x)]
     for x in lines:
         for y in subjects:
             if y['event'] == x[1]:
                 y['pid'] = x[3]
     handles = []
+    print(subjects)
     for i in subjects:
         handles.append({'event': i['event'], 'handle': subprocess.Popen(['python',
                                                                          './inject.py',
