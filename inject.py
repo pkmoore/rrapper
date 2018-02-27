@@ -218,14 +218,15 @@ if __name__ == '__main__':
     # past an rr syscall buffering related injected system call
     syscallreplay.syscall(pid)
     print("Continuing", pid)
-    entering = True
+    syscallreplay.entering_syscall = True
     _, status = os.waitpid(pid, 0)
     while not os.WIFEXITED(status):
         syscall_object = syscalls[syscall_index]
-        handle_syscall(pid, syscallreplay.peek_register(pid, syscallreplay.ORIG_EAX), syscall_object, entering)
-        if not entering:
+        print(syscallreplay.entering_syscall)
+        handle_syscall(pid, syscallreplay.peek_register(pid, syscallreplay.ORIG_EAX), syscall_object, syscallreplay.entering_syscall)
+        if not syscallreplay.entering_syscall:
             syscall_index += 1
-        entering = not entering
+        syscallreplay.entering_syscall = not syscallreplay.entering_syscall
         syscallreplay.syscall(pid)
         _, status = os.waitpid(pid, 0)
     if syscall_index == syscall_index_end:
