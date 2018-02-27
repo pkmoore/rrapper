@@ -29,6 +29,7 @@ if __name__ == '__main__':
     f = open('proc.out', 'r')
     lines = f.readlines()
     print(lines)
+    os.remove('proc.out')
     lines = [x.strip().split(' ') for x in lines if re.match('EVENT: [0-9]+ PID: [0-9]+', x)]
     assert(len(lines) > 0)
     for x in lines:
