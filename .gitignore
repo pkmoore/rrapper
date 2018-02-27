@@ -1,2 +1,3 @@
 *.pyc
 .projectile
+syscall_definitions.pickle
