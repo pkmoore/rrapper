@@ -1,6 +1,8 @@
 from __future__ import print_function
 import sys
 import os
+import json
+
 import logging
 from syscallreplay import syscallreplay
 from syscallreplay import file_handlers
@@ -203,6 +205,9 @@ if __name__ == '__main__':
     syscalls = trace.syscalls
     syscall_index = int(sys.argv[4])
     syscall_index_end = int(sys.argv[5])
+    state_file = sys.argv[6]
+    with open(state_file, 'r') as f:
+        syscallreplay.injected_state = json.load(f)
     # Requires kernel.yama.ptrace_scope = 0
     # in /etc/sysctl.d/10-ptrace.conf
     # on modern Ubuntu
