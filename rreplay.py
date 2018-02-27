@@ -43,7 +43,8 @@ if __name__ == '__main__':
                                                                          i['event'],
                                                                          i['trace_file'],
                                                                          i['trace_start'],
-                                                                         i['trace_end']])})
+                                                                         i['trace_end'],
+                                                                         str(i['event']) + '_state.json'])})
     for h in handles:
         if h['handle'].wait() != 0:
             print('Injector for event {} failed'.format(h['event']))
