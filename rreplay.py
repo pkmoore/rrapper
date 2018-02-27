@@ -30,12 +30,12 @@ if __name__ == '__main__':
     lines = f.readlines()
     print(lines)
     lines = [x.strip().split(' ') for x in lines if re.match('EVENT: [0-9]+ PID: [0-9]+', x)]
+    assert(len(lines) > 0)
     for x in lines:
         for y in subjects:
             if y['event'] == x[1]:
                 y['pid'] = x[3]
     handles = []
-    print(subjects)
     for i in subjects:
         handles.append({'event': i['event'], 'handle': subprocess.Popen(['python',
                                                                          './inject.py',
