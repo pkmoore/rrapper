@@ -208,6 +208,7 @@ if __name__ == '__main__':
     state_file = sys.argv[6]
     with open(state_file, 'r') as f:
         syscallreplay.injected_state = json.load(f)
+    os.remove(state_file)
     # Requires kernel.yama.ptrace_scope = 0
     # in /etc/sysctl.d/10-ptrace.conf
     # on modern Ubuntu
