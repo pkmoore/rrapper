@@ -223,7 +223,6 @@ if __name__ == '__main__':
     _, status = os.waitpid(pid, 0)
     while not os.WIFEXITED(status):
         syscall_object = syscalls[syscall_index]
-        print(syscallreplay.entering_syscall)
         handle_syscall(pid, syscallreplay.peek_register(pid, syscallreplay.ORIG_EAX), syscall_object, syscallreplay.entering_syscall)
         if not syscallreplay.entering_syscall:
             syscall_index += 1
