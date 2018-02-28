@@ -109,7 +109,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(145, False): check_return_value_exit_handler,
         #(146, True): writev_entry_handler,
         #(146, False): writev_exit_handler,
-        #(197, True): fstat64_entry_handler,
+        (197, True): file_handlers.fstat64_entry_handler,
         #(197, False): check_return_value_exit_handler,
         #(122, True): uname_entry_handler,
         #(183, True): getcwd_entry_handler,
