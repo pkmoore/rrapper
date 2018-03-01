@@ -6,6 +6,7 @@ import json
 import logging
 from syscallreplay import syscallreplay
 from syscallreplay import file_handlers
+from syscallreplay import kernel_handlers
 from syscallreplay import util
 from syscallreplay.util import ReplayDeltaError
 
@@ -76,8 +77,8 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         ## (195, False): check_return_value_exit_handler,
         #(39, True): check_return_value_entry_handler,
         #(39, False): check_return_value_exit_handler,
-        #(45, True): check_return_value_entry_handler,
-        #(45, False): check_return_value_exit_handler,
+        (45, True): kernel_handlers.brk_entry_handler,
+        (45, False): kernel_handlers.brk_exit_handler,
         #(91, True): check_return_value_entry_handler,
         #(91, False): check_return_value_exit_handler,
         ## (125, True): check_return_value_entry_handler,
