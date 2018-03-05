@@ -1,3 +1,5 @@
+"""Run rr and attach injectors appropriately based on the specified config
+"""
 from __future__ import print_function
 
 import os
@@ -9,7 +11,7 @@ import time
 
 
 if __name__ == '__main__':
-    cfg  = ConfigParser.SafeConfigParser()
+    cfg = ConfigParser.SafeConfigParser()
     cfg.read(sys.argv[1])
     #os.environ['RR_LOG'] = 'ReplaySession'
     f = open('proc.out', 'w', 0)
@@ -31,7 +33,7 @@ if __name__ == '__main__':
     print(lines)
     os.remove('proc.out')
     lines = [x.strip().split(' ') for x in lines if re.match('EVENT: [0-9]+ PID: [0-9]+', x)]
-    assert(len(lines) > 0)
+    assert lines
     for x in lines:
         for y in subjects:
             if y['event'] == x[1]:
@@ -45,8 +47,8 @@ if __name__ == '__main__':
                                                                          i['trace_file'],
                                                                          i['trace_start'],
                                                                          i['trace_end'],
-                                                                         str(i['event']) + '_state.json'])})
+                                                                         str(i['event']) +
+                                                                         '_state.json'])})
     for h in handles:
         if h['handle'].wait() != 0:
             print('Injector for event {} failed'.format(h['event']))
-
