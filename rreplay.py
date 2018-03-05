@@ -30,9 +30,10 @@ if __name__ == '__main__':
     f.close()
     f = open('proc.out', 'r')
     lines = f.readlines()
-    print(lines)
     os.remove('proc.out')
-    lines = [x.strip().split(' ') for x in lines if re.match('EVENT: [0-9]+ PID: [0-9]+', x)]
+    lines = [re.match('.*(EVENT: [0-9]+ PID: [0-9]+).*', x) for x in lines]
+    lines = [x.group(1) for x in lines if x is not None]
+    lines = [x.strip().split(' ') for x in lines]
     assert lines
     for x in lines:
         for y in subjects:
