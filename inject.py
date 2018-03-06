@@ -1,6 +1,7 @@
 from __future__ import print_function
 import sys
 import os
+from signal import SIGTERM
 import json
 
 import logging
@@ -273,7 +274,9 @@ if __name__ == '__main__':
         syscallreplay.entering_syscall = not syscallreplay.entering_syscall
         syscallreplay.syscall(pid)
         _, status = os.waitpid(pid, 0)
-    if syscall_index == syscall_index_end:
-        print('Completed the trace')
-    else:
-        print('Did not complete trace')
+        if syscall_index == syscall_index_end:
+            print('Completed the trace')
+            os.kill(pid, SIGTERM)
+            sys.exit(0)
+        else:
+            print('Did not complete trace')
