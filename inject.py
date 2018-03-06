@@ -170,7 +170,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(4, False): file_handlers.write_exit_handler,
         (3, True): file_handlers.read_entry_handler,
         #(3, False): check_return_value_exit_handler,
-        #(6, True): close_entry_handler,
+        (6, True): file_handlers.close_entry_handler,
         #(6, False): close_exit_handler,
         #(168, True): poll_entry_handler,
         #(54, True): ioctl_entry_handler,
