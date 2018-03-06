@@ -7,6 +7,7 @@ import logging
 from syscallreplay import syscallreplay
 from syscallreplay import file_handlers
 from syscallreplay import kernel_handlers
+from syscallreplay import socket_handlers
 from syscallreplay import util
 from syscallreplay.util import ReplayDeltaError
 
@@ -14,6 +15,53 @@ sys.path.append('posix-omni-parser/')
 import Trace
 
 logging.basicConfig(stream=sys.stderr, level=4)
+
+def handle_socketcall(syscall_id, syscall_object, entering, pid):
+    ''' Validate the subcall (NOT SYSCALL!) id of the socket subcall against
+    the subcall name we expect based on the current system call object.  Then,
+    hand off responsibility to the appropriate subcall handler.
+
+
+    '''
+    subcall_handlers = {
+        ('socket', True): socket_handlers.socket_entry_handler,
+        #('socket', False): socket_exit_handler,
+        #('accept', True): accept_subcall_entry_handler,
+        #('accept', False): accept_subcall_entry_handler,
+        #('bind', True): bind_entry_handler,
+        #('bind', False): bind_exit_handler,
+        #('listen', True): listen_entry_handler,
+        #('listen', False): listen_exit_handler,
+        #('recv', True): recv_subcall_entry_handler,
+        #('recvfrom', True): recvfrom_subcall_entry_handler,
+        #('setsockopt', True): setsockopt_entry_handler,
+        #('send', True): send_entry_handler,
+        #('send', False): send_exit_handler,
+        #('connect', True): connect_entry_handler,
+        #('connect', False): connect_exit_handler,
+        #('getsockopt', True): getsockopt_entry_handler,
+        ## ('sendmmsg', True): sendmmsg_entry_handler,
+        #('sendto', True): sendto_entry_handler,
+        #('sendto', False): sendto_exit_handler,
+        #('shutdown', True): shutdown_subcall_entry_handler,
+        #('recvmsg', True): recvmsg_entry_handler,
+        #('recvmsg', False): recvmsg_exit_handler,
+        #('getsockname', True): getsockname_entry_handler,
+        #('getsockname', False): getsockname_exit_handler,
+        #('getpeername', True): getpeername_entry_handler
+    }
+    # The subcall id of the socket subcall is located in the EBX register
+    # according to our Linux's convention.
+    subcall_id = syscallreplay.peek_register(pid, syscallreplay.EBX)
+    util.validate_subcall(subcall_id, syscall_object)
+    try:
+        subcall_handlers[(syscall_object.name, entering)](syscall_id,
+                                                          syscall_object,
+                                                          pid)
+    except KeyError:
+        raise NotImplementedError('No handler for socket subcall %s %s',
+                                  syscall_object.name,
+                                  'entry' if entering else 'exit')
 
 def handle_syscall(pid, syscall_id, syscall_object, entering):
     ''' Validate the id of the system call against the name of the system call
@@ -30,18 +78,12 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
     # the entry point for code calls the appropriate socketf code based on the
     # subcall id in EBX.
     if syscall_id == 102:
-        raise NotImplementedError('This is a socket subcall')
-        #logging.debug('This is a socket subcall')
-        ## TODO: delete this logging
-        #ebx = cint.peek_register(pid, cint.EBX)
-        #logging.debug('Socketcall id from EBX is: %s', ebx)
-
         ## Hand off to code that deals with socket calls and return once that is
         ## complete.  Exceptions will be thrown if something is unsuccessful
         ## that end.  Return immediately after because we don't want our system
         ## call handler code double-handling the already handled socket subcall
-        #socketcall_handler(syscall_id, syscall_object, entering, pid)
-        #return
+        handle_socketcall(syscall_id, syscall_object, entering, pid)
+        return
     #logging.debug('Checking syscall against execution')
     util.validate_syscall(syscall_id, syscall_object)
     # We ignore these system calls because they have to do with aspecs of
@@ -223,6 +265,7 @@ if __name__ == '__main__':
     syscallreplay.entering_syscall = True
     _, status = os.waitpid(pid, 0)
     while not os.WIFEXITED(status):
+        print(syscallreplay.injected_state['open_fds'])
         syscall_object = syscalls[syscall_index]
         handle_syscall(pid, syscallreplay.peek_register(pid, syscallreplay.ORIG_EAX), syscall_object, syscallreplay.entering_syscall)
         if not syscallreplay.entering_syscall:
