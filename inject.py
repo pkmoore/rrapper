@@ -278,5 +278,3 @@ if __name__ == '__main__':
             print('Completed the trace')
             os.kill(pid, SIGTERM)
             sys.exit(0)
-        else:
-            print('Did not complete trace')
