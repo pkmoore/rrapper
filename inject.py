@@ -9,6 +9,7 @@ from syscallreplay import syscallreplay
 from syscallreplay import file_handlers
 from syscallreplay import kernel_handlers
 from syscallreplay import socket_handlers
+from syscallreplay import time_handlers
 from syscallreplay import util
 from syscallreplay.util import ReplayDeltaError
 
@@ -139,9 +140,9 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(38, False): check_return_value_exit_handler,
         #(15, True): syscall_return_success_handler,
         #(78, True): gettimeofday_entry_handler,
-        #(13, True): time_entry_handler,
+        (13, True): time_handlers.time_entry_handler,
         #(27, True): syscall_return_success_handler,
-        #(5, True): open_entry_handler,
+        (5, True): file_handlers.open_entry_handler,
         #(5, False): open_exit_handler,
         #(60, True): syscall_return_success_handler,
         #(85, True): readlink_entry_handler,
@@ -176,13 +177,13 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(168, True): poll_entry_handler,
         #(54, True): ioctl_entry_handler,
         #(54, False): ioctl_exit_handler,
-        #(195, True): stat64_entry_handler,
+        (195, True): file_handlers.stat64_entry_handler,
+        (221, True): file_handlers.fcntl64_entry_handler,
         #(195, False): check_return_value_exit_handler,
         #(141, True): getdents_entry_handler,
         #(142, False): getdents_exit_handler,
         #(142, True): select_entry_handler,
         #(82, True): select_entry_handler,
-        #(221, True): fcntl64_entry_handler,
         #(196, True): lstat64_entry_handler,
         #(268, True): statfs64_entry_handler,
         #(265, True): clock_gettime_entry_handler,
@@ -266,7 +267,6 @@ if __name__ == '__main__':
     syscallreplay.entering_syscall = True
     _, status = os.waitpid(pid, 0)
     while not os.WIFEXITED(status):
-        print(syscallreplay.injected_state['open_fds'])
         syscall_object = syscalls[syscall_index]
         handle_syscall(pid, syscallreplay.peek_register(pid, syscallreplay.ORIG_EAX), syscall_object, syscallreplay.entering_syscall)
         if not syscallreplay.entering_syscall:
