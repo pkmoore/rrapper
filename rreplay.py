@@ -28,9 +28,9 @@ if __name__ == '__main__':
     proc = subprocess.Popen(command, stdout=f, stderr=f)
     time.sleep(3)
     f.close()
-    f = open('proc.out', 'r')
+    f = open('events.log', 'r')
     lines = f.readlines()
-    os.remove('proc.out')
+    os.unlink('events.log')
     lines = [re.match('.*(EVENT: [0-9]+ PID: [0-9]+).*', x) for x in lines]
     lines = [x.group(1) for x in lines if x is not None]
     lines = [x.strip().split(' ') for x in lines]
