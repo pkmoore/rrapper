@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import os
+import os.path
 import sys
 import subprocess
 import re
@@ -11,10 +12,11 @@ import time
 
 
 if __name__ == '__main__':
+    if os.path.exists('rrdump_proc.pipe'):
+        os.unlink('rrdump_proc.pipe')
     cfg = ConfigParser.SafeConfigParser()
     cfg.read(sys.argv[1])
     #os.environ['RR_LOG'] = 'ReplaySession'
-    f = open('proc.out', 'w', 0)
     subjects = []
     for i in cfg.sections():
         subjects.append({'event': cfg.get(i, 'event'),
@@ -25,31 +27,37 @@ if __name__ == '__main__':
     for i in subjects:
         events_str += i['event'] + ','
     command = ['rr', 'replay', '-a', '-n', events_str]
-    proc = subprocess.Popen(command, stdout=f, stderr=f)
-    time.sleep(3)
-    f.close()
-    f = open('events.log', 'r')
-    lines = f.readlines()
-    os.unlink('events.log')
-    lines = [re.match('.*(EVENT: [0-9]+ PID: [0-9]+).*', x) for x in lines]
-    lines = [x.group(1) for x in lines if x is not None]
-    lines = [x.strip().split(' ') for x in lines]
-    assert lines
-    for x in lines:
-        for y in subjects:
-            if y['event'] == x[1]:
-                y['pid'] = x[3]
+    proc = subprocess.Popen(command)
+
+    while not os.path.exists('rrdump_proc.pipe'):
+        continue
+    f = open('rrdump_proc.pipe', 'r')
+    buf = ''
+    subject_index = 0
     handles = []
-    for i in subjects:
-        handles.append({'event': i['event'], 'handle': subprocess.Popen(['python',
-                                                                         './inject.py',
-                                                                         i['pid'],
-                                                                         i['event'],
-                                                                         i['trace_file'],
-                                                                         i['trace_start'],
-                                                                         i['trace_end'],
-                                                                         str(i['event']) +
-                                                                         '_state.json'])})
+    # A message on the pipe looks like:
+    # EVENT: <event number> PID: <pid>\n
+    while True:
+        buf += f.read(1)
+        if buf[-1] == '\n':
+            s = subjects[subject_index]
+            # The pid we want is in index 3 of the split message list
+            s['pid'] = buf.split(' ')[3]
+            handles.append({'event': i['event'],
+                            'handle': subprocess.Popen(['python',
+                                                        './inject.py',
+                                                        s['pid'],
+                                                        s['event'],
+                                                        s['trace_file'],
+                                                        s['trace_start'],
+                                                        s['trace_end'],
+                                                        str(s['event']) +
+                                                        '_state.json'])})
+            subject_index += 1
+        if subject_index == len(subjects):
+            break
+    f.close()
+    os.unlink('rrdump_proc.pipe')
     for h in handles:
         if h['handle'].wait() != 0:
             print('Injector for event {} failed'.format(h['event']))
