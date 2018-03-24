@@ -10,6 +10,7 @@ from syscallreplay import file_handlers
 from syscallreplay import kernel_handlers
 from syscallreplay import socket_handlers
 from syscallreplay import time_handlers
+from syscallreplay import multiplex_handlers
 from syscallreplay import util
 from syscallreplay.util import ReplayDeltaError
 
@@ -174,7 +175,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(3, False): check_return_value_exit_handler,
         (6, True): file_handlers.close_entry_handler,
         #(6, False): close_exit_handler,
-        #(168, True): poll_entry_handler,
+        (168, True): multiplex_handlers.poll_entry_handler,
         #(54, True): ioctl_entry_handler,
         #(54, False): ioctl_exit_handler,
         (195, True): file_handlers.stat64_entry_handler,
