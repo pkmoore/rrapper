@@ -5,6 +5,9 @@ from signal import SIGTERM
 import json
 
 import logging
+
+from syscallreplay import syscall_dict
+
 from syscallreplay import syscallreplay
 from syscallreplay import file_handlers
 from syscallreplay import kernel_handlers
@@ -88,6 +91,16 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         handle_socketcall(syscall_id, syscall_object, entering, pid)
         return
     #logging.debug('Checking syscall against execution')
+    forgers = {
+        13: time_handlers.time_forger,
+    }
+    # if there is a forger registerd, check for a mismatch between the called
+    # syscall and the trace syscall -- indicating we need to forge a call that
+    # isn't present in the trace
+    if syscall_id in forgers.keys():
+        if syscall_object.name != syscall_dict.SYSCALLS[syscall_id][4:]:
+            forgers[syscall_id](pid)
+            return
     util.validate_syscall(syscall_id, syscall_object)
     # We ignore these system calls because they have to do with aspecs of
     # execution that we don't want to try to replay and, at the same time,
