@@ -210,6 +210,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(242, True): sched_getaffinity_entry_handler,
         #(243, True): syscall_return_success_handler,
         (254, True): multiplex_handlers.epoll_create_entry_handler,
+        (255, True): multiplex_handlers.epoll_ctl_entry_handler,
         #(258, True): set_tid_address_entry_handler,
         #(258, False): set_tid_address_exit_handler,
         #(259, True): timer_create_entry_handler,
