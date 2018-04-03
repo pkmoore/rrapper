@@ -28,16 +28,24 @@ if __name__ == '__main__':
     lines = f.readlines()
     os.unlink('proc.out')
     assert lines
+    l = open(strace_file).readlines()
+    line = l[line_no-1]
+    name = line.split('  ')[1]
+    name = name[:name.find('(')]
+
     lines = [x for x in lines if re.search(r'.*ENTERING_SYSCALL', x)]
     lines = lines[find_first_execve(lines):]
+    lines = [x for x in lines if not re.search(r'replaying SYSCALL: time;', x)]
 
-    pre_context = lines[:line_no]
-    pre_context = pre_context[-5:]
-    post_context = lines[line_no:]
-    post_context = post_context[:5]
+    potentials = []
+    for idx, val in enumerate(lines):
+        if re.search(name, val):
+            potentials.append(idx)
 
-    for i in pre_context:
-        print(i, end='')
-    print("!!!")
-    for i in post_context:
-        print(i, end='')
+    for i in potentials:
+        event_num = re.search(r'event [0-9]*', lines[i]).group(0).split(' ')[1]
+        print('--- Potential event: {}'.format(event_num))
+        for j in lines[i-5:i+5]:
+            print(j, end='')
+        print('---')
+
