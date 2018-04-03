@@ -32,7 +32,7 @@ def handle_socketcall(syscall_id, syscall_object, entering, pid):
     subcall_handlers = {
         ('socket', True): socket_handlers.socket_entry_handler,
         #('socket', False): socket_exit_handler,
-        #('accept', True): accept_subcall_entry_handler,
+        ('accept', True): socket_handlers.accept_subcall_entry_handler,
         #('accept', False): accept_subcall_entry_handler,
         #('bind', True): bind_entry_handler,
         #('bind', False): bind_exit_handler,
