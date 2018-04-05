@@ -93,6 +93,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
     #logging.debug('Checking syscall against execution')
     forgers = {
         13: time_handlers.time_forger,
+        78: time_handlers.gettimeofday_forger,
     }
     # if there is a forger registerd, check for a mismatch between the called
     # syscall and the trace syscall -- indicating we need to forge a call that
@@ -244,7 +245,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(311, True): syscall_return_success_handler,
         #(320, True): utimensat_entry_handler,
         #(320, False): check_return_value_exit_handler,
-        #(328, True): eventfd2_entry_handler,
+        (328, True): file_handlers.eventfd2_entry_handler,
         #(340, True): prlimit64_entry_handler,
         #(345, True): sendmmsg_entry_handler,
         #(345, False): sendmmsg_exit_handler
