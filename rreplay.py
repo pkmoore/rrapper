@@ -27,8 +27,10 @@ if __name__ == '__main__':
     for i in subjects:
         events_str += i['event'] + ','
     command = ['rr', 'replay', '-a', '-n', events_str]
-    proc = subprocess.Popen(command)
-
+    f = open('proc.out', 'w')
+    proc = subprocess.Popen(command, stdout=f, stderr=f)
+    f.close()
+    os.unlink('proc.out')
     while not os.path.exists('rrdump_proc.pipe'):
         continue
     f = open('rrdump_proc.pipe', 'r')
