@@ -265,9 +265,9 @@ if __name__ == '__main__':
     pid = int(sys.argv[1])
     event = sys.argv[2]
     trace = Trace.Trace(sys.argv[3])
-    syscalls = trace.syscalls
-    syscall_index = int(sys.argv[4])
-    syscall_index_end = int(sys.argv[5])
+    syscallreplay.syscalls = trace.syscalls
+    syscallreplay.syscall_index = int(sys.argv[4])
+    syscallreplay.syscall_index_end = int(sys.argv[5])
     state_file = sys.argv[6]
     with open(state_file, 'r') as f:
         syscallreplay.injected_state = json.load(f)
@@ -275,24 +275,24 @@ if __name__ == '__main__':
     # Requires kernel.yama.ptrace_scope = 0
     # in /etc/sysctl.d/10-ptrace.conf
     # on modern Ubuntu
-    print("Injecting", pid)
+    logging.debug('Injecting %d', pid)
     syscallreplay.attach(pid)
     syscallreplay.syscall(pid)
     # We need an additional call to PTRACE_SYSCALL here in order to skip
     # past an rr syscall buffering related injected system call
     syscallreplay.syscall(pid)
-    print("Continuing", pid)
+    logging.debug('Continuing %d', pid)
     syscallreplay.entering_syscall = True
     _, status = os.waitpid(pid, 0)
     while not os.WIFEXITED(status):
-        syscall_object = syscalls[syscall_index]
+        syscall_object = syscallreplay.syscalls[syscallreplay.syscall_index]
         handle_syscall(pid, syscallreplay.peek_register(pid, syscallreplay.ORIG_EAX), syscall_object, syscallreplay.entering_syscall)
         if not syscallreplay.entering_syscall:
-            syscall_index += 1
+            syscallreplay.syscall_index += 1
         syscallreplay.entering_syscall = not syscallreplay.entering_syscall
         syscallreplay.syscall(pid)
         _, status = os.waitpid(pid, 0)
-        if syscall_index == syscall_index_end:
+        if syscallreplay.syscall_index == syscallreplay.syscall_index_end:
             print('Completed the trace')
             os.kill(pid, SIGTERM)
             sys.exit(0)
