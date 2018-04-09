@@ -1,7 +1,7 @@
 from __future__ import print_function
 import sys
 import os
-from signal import SIGTERM
+import signal
 import json
 
 import logging
@@ -154,7 +154,6 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(38, True): rename_entry_handler,
         #(38, False): check_return_value_exit_handler,
         #(15, True): syscall_return_success_handler,
-        #(78, True): gettimeofday_entry_handler,
         (13, True): time_handlers.time_entry_handler,
         #(27, True): syscall_return_success_handler,
         (5, True): file_handlers.open_entry_handler,
@@ -167,6 +166,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(94, False): check_return_value_entry_handler,
         #(145, True): readv_entry_handler,
         #(145, False): check_return_value_exit_handler,
+        (78, True): time_handlers.gettimeofday_entry_handler,
         (146, True): file_handlers.writev_entry_handler,
         #(146, False): writev_exit_handler,
         (197, True): file_handlers.fstat64_entry_handler,
@@ -277,10 +277,10 @@ if __name__ == '__main__':
     # on modern Ubuntu
     logging.debug('Injecting %d', pid)
     syscallreplay.attach(pid)
-    syscallreplay.syscall(pid)
+    syscallreplay.syscall(pid, signal.SIGCONT)
     # We need an additional call to PTRACE_SYSCALL here in order to skip
     # past an rr syscall buffering related injected system call
-    syscallreplay.syscall(pid)
+    syscallreplay.syscall(pid, signal.SIGCONT)
     logging.debug('Continuing %d', pid)
     syscallreplay.entering_syscall = True
     _, status = os.waitpid(pid, 0)
@@ -290,9 +290,9 @@ if __name__ == '__main__':
         if not syscallreplay.entering_syscall:
             syscallreplay.syscall_index += 1
         syscallreplay.entering_syscall = not syscallreplay.entering_syscall
-        syscallreplay.syscall(pid)
+        syscallreplay.syscall(pid, 0)
         _, status = os.waitpid(pid, 0)
         if syscallreplay.syscall_index == syscallreplay.syscall_index_end:
             print('Completed the trace')
-            os.kill(pid, SIGTERM)
+            os.kill(pid, signal.SIGTERM)
             sys.exit(0)
