@@ -12,6 +12,7 @@ from syscallreplay import syscallreplay
 from syscallreplay import file_handlers
 from syscallreplay import kernel_handlers
 from syscallreplay import socket_handlers
+from syscallreplay import recv_handlers
 from syscallreplay import time_handlers
 from syscallreplay import multiplex_handlers
 from syscallreplay import util
@@ -33,12 +34,13 @@ def handle_socketcall(syscall_id, syscall_object, entering, pid):
         ('socket', True): socket_handlers.socket_entry_handler,
         #('socket', False): socket_exit_handler,
         ('accept', True): socket_handlers.accept_subcall_entry_handler,
+        ('accept4', True): socket_handlers.accept_subcall_entry_handler,
         #('accept', False): accept_subcall_entry_handler,
         #('bind', True): bind_entry_handler,
         #('bind', False): bind_exit_handler,
         #('listen', True): listen_entry_handler,
         #('listen', False): listen_exit_handler,
-        #('recv', True): recv_subcall_entry_handler,
+        ('recv', True): recv_handlers.recv_subcall_entry_handler,
         #('recvfrom', True): recvfrom_subcall_entry_handler,
         ('setsockopt', True): socket_handlers.setsockopt_entry_handler,
         #('send', True): send_entry_handler,
