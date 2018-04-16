@@ -10,6 +10,7 @@ import logging
 from syscallreplay import syscall_dict
 
 from syscallreplay import syscallreplay
+from syscallreplay import generic_handlers
 from syscallreplay import file_handlers
 from syscallreplay import kernel_handlers
 from syscallreplay import socket_handlers
@@ -155,14 +156,12 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(39, False): check_return_value_exit_handler,
         (45, True): kernel_handlers.brk_entry_handler,
         (45, False): kernel_handlers.brk_exit_handler,
-        #(91, True): check_return_value_entry_handler,
-        #(91, False): check_return_value_exit_handler,
+        (91, True): generic_handlers.check_return_value_entry_handler,
+        (91, False): generic_handlers.check_return_value_exit_handler,
         ## (125, True): check_return_value_entry_handler,
         ## (125, False): check_return_value_exit_handler,
         ## mmap2 calls are never replayed. Sometimes we must fix a file
         ## descriptor  in position 4.
-        #(192, True): mmap2_entry_handler,
-        #(192, False): mmap2_exit_handler,
         #(196, True): lstat64_entry_handler,
         #(10, True): unlink_entry_handler,
         #(10, False): check_return_value_exit_handler,
@@ -186,6 +185,8 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         (78, True): time_handlers.gettimeofday_entry_handler,
         (146, True): file_handlers.writev_entry_handler,
         #(146, False): writev_exit_handler,
+        (192, True): kernel_handlers.mmap2_entry_handler,
+        (192, False): kernel_handlers.mmap2_exit_handler,
         (197, True): file_handlers.fstat64_entry_handler,
         #(197, False): check_return_value_exit_handler,
         #(122, True): uname_entry_handler,
