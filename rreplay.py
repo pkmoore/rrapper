@@ -20,12 +20,13 @@ if __name__ == '__main__':
     subjects = []
     for i in cfg.sections():
         subjects.append({'event': cfg.get(i, 'event'),
+                         'pid': cfg.get(i, 'pid'),
                          'trace_file': cfg.get(i, 'trace_file'),
                          'trace_start': cfg.get(i, 'trace_start'),
                          'trace_end': cfg.get(i, 'trace_end')})
     events_str = ''
     for i in subjects:
-        events_str += i['event'] + ','
+        events_str += i['pid'] + ':' + i['event'] + ','
     command = ['rr', 'replay', '-a', '-n', events_str]
     f = open('proc.out', 'w')
     proc = subprocess.Popen(command, stdout=f, stderr=f)
