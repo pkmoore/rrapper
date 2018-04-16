@@ -3,6 +3,7 @@ import sys
 import os
 import signal
 import json
+import traceback
 
 import logging
 
@@ -22,6 +23,21 @@ sys.path.append('posix-omni-parser/')
 import Trace
 
 logging.basicConfig(stream=sys.stderr, level=4)
+
+
+def _kill_parent_process(pid):
+    f = open('/proc/' + str(pid) + '/status', 'r')
+    for i in f:
+        s = i.split()
+        if s[0] == 'Tgid:':
+            tgid = int(s[1])
+    if tgid != pid:
+        logging.debug('Got differing tgid {}, killing group'
+                      .format(tgid))
+        os.kill(tgid, signal.SIGKILL)
+    else:
+        os.kill(pid, signal.SIGKILL)
+
 
 def handle_socketcall(syscall_id, syscall_object, entering, pid):
     ''' Validate the subcall (NOT SYSCALL!) id of the socket subcall against
@@ -288,7 +304,13 @@ if __name__ == '__main__':
     _, status = os.waitpid(pid, 0)
     while not os.WIFEXITED(status):
         syscall_object = syscallreplay.syscalls[syscallreplay.syscall_index]
-        handle_syscall(pid, syscallreplay.peek_register(pid, syscallreplay.ORIG_EAX), syscall_object, syscallreplay.entering_syscall)
+        try:
+            handle_syscall(pid, syscallreplay.peek_register(pid, syscallreplay.ORIG_EAX), syscall_object, syscallreplay.entering_syscall)
+        except:
+            traceback.print_exc()
+            print('Failed to complete trace')
+            _kill_parent_process(pid)
+            sys.exit(1)
         if not syscallreplay.entering_syscall:
             syscallreplay.syscall_index += 1
         syscallreplay.entering_syscall = not syscallreplay.entering_syscall
@@ -296,5 +318,5 @@ if __name__ == '__main__':
         _, status = os.waitpid(pid, 0)
         if syscallreplay.syscall_index == syscallreplay.syscall_index_end:
             print('Completed the trace')
-            os.kill(pid, signal.SIGTERM)
+            _kill_parent_process(pid)
             sys.exit(0)
