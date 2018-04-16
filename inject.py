@@ -70,8 +70,7 @@ def handle_socketcall(syscall_id, syscall_object, entering, pid):
         ('shutdown', True): socket_handlers.shutdown_subcall_entry_handler,
         #('recvmsg', True): recvmsg_entry_handler,
         #('recvmsg', False): recvmsg_exit_handler,
-        #('getsockname', True): getsockname_entry_handler,
-        #('getsockname', False): getsockname_exit_handler,
+        ('getsockname', True): socket_handlers.getsockname_entry_handler,
         #('getpeername', True): getpeername_entry_handler
     }
     # The subcall id of the socket subcall is located in the EBX register
