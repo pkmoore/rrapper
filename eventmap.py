@@ -22,7 +22,8 @@ if __name__ == '__main__':
     subjects = []
     command = ['rr', 'replay', '-a']
     proc = subprocess.Popen(command, stdout=f, stderr=f)
-    time.sleep(3)
+    while proc.poll() == None:
+        pass
     f.close()
     f = open('proc.out', 'r')
     lines = f.readlines()
