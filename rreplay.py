@@ -19,7 +19,11 @@ if __name__ == '__main__':
     cfg.read(sys.argv[1])
     #os.environ['RR_LOG'] = 'ReplaySession'
     subjects = []
-    for i in cfg.sections():
+    sections = cfg.sections()
+    rr_dir_section = sections[0]
+    rr_dir = cfg.get(rr_dir_section, 'rr_dir')
+    sections = sections[1:]
+    for i in sections:
         subjects.append({'event': cfg.get(i, 'event'),
                          'rec_pid': cfg.get(i, 'pid'),
                          'trace_file': cfg.get(i, 'trace_file'),
@@ -30,7 +34,7 @@ if __name__ == '__main__':
     events_str = ''
     for i in subjects:
         events_str += i['rec_pid'] + ':' + i['event'] + ','
-    command = ['rr', 'replay', '-a', '-n', events_str]
+    command = ['rr', 'replay', '-a', '-n', events_str, rr_dir]
     f = open('proc.out', 'w')
     proc = subprocess.Popen(command, stdout=f, stderr=f)
     f.close()
@@ -49,7 +53,6 @@ if __name__ == '__main__':
     while True:
         buf += f.read(1)
         if buf[-1] == '\n':
-            print(buf)
             parts = buf.split(' ')
             inject = parts[0].strip()[:-1]
             event = parts[2]
