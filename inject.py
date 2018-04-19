@@ -305,7 +305,11 @@ if __name__ == '__main__':
     while not os.WIFEXITED(status):
         syscall_object = syscallreplay.syscalls[syscallreplay.syscall_index]
         try:
-            handle_syscall(pid, syscallreplay.peek_register(pid, syscallreplay.ORIG_EAX), syscall_object, syscallreplay.entering_syscall)
+            handle_syscall(pid,
+                           syscallreplay.peek_register(pid,
+                                                       syscallreplay.ORIG_EAX),
+                           syscall_object,
+                           syscallreplay.entering_syscall)
         except:
             traceback.print_exc()
             print('Failed to complete trace')
