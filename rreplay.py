@@ -37,8 +37,6 @@ if __name__ == '__main__':
     command = ['rr', 'replay', '-a', '-n', events_str, rr_dir]
     f = open('proc.out', 'w')
     proc = subprocess.Popen(command, stdout=f, stderr=f)
-    f.close()
-    os.unlink('proc.out')
     while not os.path.exists('rrdump_proc.pipe'):
         continue
     f = open('rrdump_proc.pipe', 'r')
@@ -90,3 +88,5 @@ if __name__ == '__main__':
         if ret != 0:
             print('Injector for event:rec_pid {}:{} failed'
                   .format(s['event'], s['rec_pid']))
+    f.close()
+    os.unlink('proc.out')
