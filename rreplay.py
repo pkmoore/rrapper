@@ -50,6 +50,8 @@ if __name__ == '__main__':
     subjects_injected = 0
     while True:
         buf += f.read(1)
+        if buf == '':
+            break
         if buf[-1] == '\n':
             parts = buf.split(' ')
             inject = parts[0].strip()[:-1]
@@ -79,7 +81,11 @@ if __name__ == '__main__':
     f.close()
     os.unlink('rrdump_proc.pipe')
     for s in subjects:
-        ret = s['handle'].wait()
+        if 'handle' in s:
+            ret = s['handle'].wait()
+        else:
+            print('No handle associated with subject {}'.format(s))
+            ret = -1
         for i in s['other_procs']:
             try:
                 os.kill(int(i), signal.SIGKILL)
