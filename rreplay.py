@@ -67,6 +67,7 @@ if __name__ == '__main__':
                 s['handle'] =  subprocess.Popen(['python',
                                                  './inject.py',
                                                  s['pid'],
+                                                 s['rec_pid'],
                                                  s['event'],
                                                  s['trace_file'],
                                                  s['trace_start'],

@@ -281,15 +281,18 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
 
 if __name__ == '__main__':
     pid = int(sys.argv[1])
-    event = sys.argv[2]
-    trace = Trace.Trace(sys.argv[3])
+    rec_pid = sys.argv[2]
+    event = sys.argv[3]
+    trace = Trace.Trace(sys.argv[4])
     syscallreplay.syscalls = trace.syscalls
-    syscallreplay.syscall_index = int(sys.argv[4])
-    syscallreplay.syscall_index_end = int(sys.argv[5])
-    state_file = sys.argv[6]
+    syscallreplay.syscall_index = int(sys.argv[5])
+    syscallreplay.syscall_index_end = int(sys.argv[6])
+    state_file = sys.argv[7]
     with open(state_file, 'r') as f:
         syscallreplay.injected_state = json.load(f)
     os.remove(state_file)
+    syscallreplay.injected_state['rec_pid'] = rec_pid
+    syscallreplay.injected_state['open_fds'] = syscallreplay.injected_state['open_fds'][rec_pid]
     # Requires kernel.yama.ptrace_scope = 0
     # in /etc/sysctl.d/10-ptrace.conf
     # on modern Ubuntu
