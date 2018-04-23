@@ -15,8 +15,8 @@
 4018  _llseek(11, -24, [2821], SEEK_CUR) = 0
 4018  read(11, "\nPST8PDT,M3.2.0,M11.1.0\n", 4096) = 24
 4018  close(11)                         = 0
-4018  write(6, "[Mon Apr 16 13:02:27.455266 2018] [authz_core:debug] [pid 3994:tid 3071277888] mod_authz_core.c(809): [client 127.0.0.1:53148] AH01626: authorization result of Require all granted: granted\n", 189) = 189
-4018  write(6, "[Mon Apr 16 13:02:27.455612 2018] [authz_core:debug] [pid 3994:tid 3071277888] mod_authz_core.c(809): [client 127.0.0.1:53148] AH01626: authorization result of <RequireAny>: granted\n", 182) = 182
+4018  write(6, "[Mon Apr 16 13:02:27.455266 2018] [authz_core:debug] [pid 3994:tid 3071277888] mod_authz_core.c(809): [client 127.0.0.1:53148] AH01626: authorization result of Require all granted: granted\n", 190) = 190
+4018  write(6, "[Mon Apr 16 13:02:27.455612 2018] [authz_core:debug] [pid 3994:tid 3071277888] mod_authz_core.c(809): [client 127.0.0.1:53148] AH01626: authorization result of <RequireAny>: granted\n", 183) = 183
 4018  mmap2(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb72d9000
 4018  stat64("/home/preston/apache2/www/html/index.html", {st_dev=makedev(8, 1), st_ino=445783, st_mode=S_IFREG|0644, st_nlink=1, st_uid=1000, st_gid=1000, st_blksize=4096, st_blocks=24, st_size=11321, st_atime=2018/04/15-21:02:13.579224068, st_mtime=2018/04/11-11:52:31.727016722, st_ctime=2018/04/11-11:52:35.379048610}) = 0
 4018  open("/home/preston/apache2/www/html/index.html", O_RDONLY|O_LARGEFILE|O_CLOEXEC) = 11
