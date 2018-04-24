@@ -15,6 +15,7 @@ from syscallreplay import file_handlers
 from syscallreplay import kernel_handlers
 from syscallreplay import socket_handlers
 from syscallreplay import recv_handlers
+from syscallreplay import send_handlers
 from syscallreplay import time_handlers
 from syscallreplay import multiplex_handlers
 from syscallreplay import util
@@ -60,7 +61,7 @@ def handle_socketcall(syscall_id, syscall_object, entering, pid):
         ('recv', True): recv_handlers.recv_subcall_entry_handler,
         #('recvfrom', True): recvfrom_subcall_entry_handler,
         ('setsockopt', True): socket_handlers.setsockopt_entry_handler,
-        #('send', True): send_entry_handler,
+        ('send', True): send_handlers.send_entry_handler,
         #('send', False): send_exit_handler,
         ('connect', True): socket_handlers.connect_entry_handler,
         #('connect', False): connect_exit_handler,
@@ -154,6 +155,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         ## (195, False): check_return_value_exit_handler,
         #(39, True): check_return_value_entry_handler,
         #(39, False): check_return_value_exit_handler,
+        (10, True): file_handlers.unlink_entry_handler,
         (43, True): time_handlers.times_entry_handler,
         (45, True): kernel_handlers.brk_entry_handler,
         (45, False): kernel_handlers.brk_exit_handler,
@@ -164,8 +166,6 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         ## mmap2 calls are never replayed. Sometimes we must fix a file
         ## descriptor  in position 4.
         #(196, True): lstat64_entry_handler,
-        #(10, True): unlink_entry_handler,
-        #(10, False): check_return_value_exit_handler,
         #(20, True): syscall_return_success_handler,
         #(30, True): syscall_return_success_handler,
         #(38, True): rename_entry_handler,
