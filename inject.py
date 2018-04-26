@@ -305,7 +305,8 @@ if __name__ == '__main__':
     syscallreplay.syscalls = trace.syscalls
     syscallreplay.syscall_index = int(syscallreplay.injected_state['config']['trace_start'])
     syscallreplay.syscall_index_end = int(syscallreplay.injected_state['config']['trace_end'])
-    syscallreplay.injected_state['config']['mmap_backing_files'] = parse_backing_files(syscallreplay.injected_state['config']['mmap_backing_files'])
+    if 'mmap_backing_files' in syscallreplay.injected_state['config']:
+        syscallreplay.injected_state['config']['mmap_backing_files'] = parse_backing_files(syscallreplay.injected_state['config']['mmap_backing_files'])
 
     # Requires kernel.yama.ptrace_scope = 0
     # in /etc/sysctl.d/10-ptrace.conf
