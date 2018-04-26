@@ -279,21 +279,34 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
                                               syscall_id,
                                               syscall_object.name))
 
+def parse_backing_files(bfs):
+    if bfs[-1] != ';':
+        bfs += ';'
+    bfs = bfs.split(';')
+    bfs = bfs[:-1]
+    tmp = {}
+    for i in bfs:
+        bf = i.split(':')
+        tmp[bf[0]] = bf[1]
+    return tmp
+
 
 if __name__ == '__main__':
-    pid = int(sys.argv[1])
-    rec_pid = sys.argv[2]
-    event = sys.argv[3]
-    trace = Trace.Trace(sys.argv[4])
-    syscallreplay.syscalls = trace.syscalls
-    syscallreplay.syscall_index = int(sys.argv[5])
-    syscallreplay.syscall_index_end = int(sys.argv[6])
-    state_file = sys.argv[7]
-    with open(state_file, 'r') as f:
+    with open(sys.argv[1], 'r') as f:
         syscallreplay.injected_state = json.load(f)
-    os.remove(state_file)
-    syscallreplay.injected_state['rec_pid'] = rec_pid
+    os.remove(sys.argv[1])
+
+    # Configure various locals from the config section of our injected state
+    event = syscallreplay.injected_state['config']['event']
+    pid = int(syscallreplay.injected_state['config']['pid'])
+    rec_pid = syscallreplay.injected_state['config']['rec_pid']
     syscallreplay.injected_state['open_fds'] = syscallreplay.injected_state['open_fds'][rec_pid]
+    trace = Trace.Trace(syscallreplay.injected_state['config']['trace_file'])
+    syscallreplay.syscalls = trace.syscalls
+    syscallreplay.syscall_index = int(syscallreplay.injected_state['config']['trace_start'])
+    syscallreplay.syscall_index_end = int(syscallreplay.injected_state['config']['trace_end'])
+    syscallreplay.injected_state['config']['mmap_backing_files'] = parse_backing_files(syscallreplay.injected_state['config']['mmap_backing_files'])
+
     # Requires kernel.yama.ptrace_scope = 0
     # in /etc/sysctl.d/10-ptrace.conf
     # on modern Ubuntu

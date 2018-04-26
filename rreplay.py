@@ -10,7 +10,22 @@ import subprocess
 import re
 import ConfigParser
 import time
+import json
 
+rrdump_pipe = None
+def _get_message(pipe_name):
+    global rrdump_pipe
+    if not rrdump_pipe:
+        while not os.path.exists(pipe_name):
+            continue
+        rrdump_pipe = open(pipe_name, 'r')
+    buf = ''
+    while True:
+        buf += rrdump_pipe.read(1)
+        if buf == '':
+            return ''
+        if buf[-1] == '\n':
+            return buf
 
 if __name__ == '__main__':
     if os.path.exists('rrdump_proc.pipe'):
@@ -24,23 +39,27 @@ if __name__ == '__main__':
     rr_dir = cfg.get(rr_dir_section, 'rr_dir')
     sections = sections[1:]
     for i in sections:
-        subjects.append({'event': cfg.get(i, 'event'),
-                         'rec_pid': cfg.get(i, 'pid'),
-                         'trace_file': cfg.get(i, 'trace_file'),
-                         'trace_start': cfg.get(i, 'trace_start'),
-                         'trace_end': cfg.get(i, 'trace_end'),
-                         'injected_state': str(cfg.get(i, 'event')) + '_state.json',
-                         'other_procs': [],})
+        s = {}
+        s['event'] = cfg.get(i, 'event')
+        s['rec_pid'] = cfg.get(i, 'pid')
+        s['trace_file'] = cfg.get(i, 'trace_file')
+        s['trace_start'] = cfg.get(i, 'trace_start')
+        s['trace_end'] = cfg.get(i, 'trace_end')
+        s['injected_state_file'] = str(cfg.get(i, 'event')) + '_state.json'
+        s['other_procs'] = []
+
+        # mmap_backing_files is optional if we aren't using that feature
+        try:
+            s['mmap_backing_files'] = cfg.get(i, 'mmap_backing_files')
+        except ConfigParser.NoOptionError:
+            pass
+        subjects.append(s)
     events_str = ''
     for i in subjects:
         events_str += i['rec_pid'] + ':' + i['event'] + ','
     command = ['rr', 'replay', '-a', '-n', events_str, rr_dir]
     f = open('proc.out', 'w')
     proc = subprocess.Popen(command, stdout=f, stderr=f)
-    while not os.path.exists('rrdump_proc.pipe'):
-        continue
-    f = open('rrdump_proc.pipe', 'r')
-    buf = ''
     subject_index = 0
     handles = []
     # A message on the pipe looks like:
@@ -49,38 +68,31 @@ if __name__ == '__main__':
     # DONT_INJECT: EVENT: <event number> PID: <pid> REC_PID: <rec_pid>\n
     subjects_injected = 0
     while True:
-        buf += f.read(1)
-        if buf == '':
-            break
-        if buf[-1] == '\n':
-            parts = buf.split(' ')
-            inject = parts[0].strip()[:-1]
-            event = parts[2]
-            pid = parts[4]
-            rec_pid = parts[6].strip()
+        message = _get_message('rrdump_proc.pipe')
+        parts = message.split(' ')
+        inject = parts[0].strip()[:-1]
+        event = parts[2]
+        pid = parts[4]
+        rec_pid = parts[6].strip()
 
-            operating = [x for x in subjects if x['event'] == event]
-            # HACK HACK HACK: we only support spinning off once per event now
-            s = operating[0]
-            if inject == 'INJECT':
-                s['pid'] = pid
-                s['handle'] =  subprocess.Popen(['python',
-                                                 './inject.py',
-                                                 s['pid'],
-                                                 s['rec_pid'],
-                                                 s['event'],
-                                                 s['trace_file'],
-                                                 s['trace_start'],
-                                                 s['trace_end'],
-                                                 s['injected_state']])
-                subjects_injected += 1
-            elif inject == 'DONT_INJECT':
-                s['other_procs'].append(pid)
-            if subjects_injected == len(subjects):
-                break
-            buf = ''
-    f.close()
-    os.unlink('rrdump_proc.pipe')
+        operating = [x for x in subjects if x['event'] == event]
+        # HACK HACK HACK: we only support spinning off once per event now
+        s = operating[0]
+        if inject == 'INJECT':
+            with open(s['injected_state_file'], 'r') as d:
+                tmp = json.load(d)
+            s['pid'] = pid
+            tmp['config'] = s
+            with open(s['injected_state_file'], 'w') as d:
+                json.dump(tmp, d)
+            s['handle'] =  subprocess.Popen(['python',
+                                             './inject.py',
+                                             s['injected_state_file']])
+            subjects_injected += 1
+        elif inject == 'DONT_INJECT':
+            s['other_procs'].append(pid)
+        if subjects_injected == len(subjects):
+            break
     for s in subjects:
         if 'handle' in s:
             ret = s['handle'].wait()
@@ -97,3 +109,4 @@ if __name__ == '__main__':
                   .format(s['event'], s['rec_pid']))
     f.close()
     os.unlink('proc.out')
+    os.unlink('rrdump_proc.pipe')
