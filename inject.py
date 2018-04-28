@@ -270,14 +270,17 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(345, False): sendmmsg_exit_handler
         }
     if syscall_id not in ignore_list:
-        try:
-            handlers[(syscall_id, entering)](syscall_id, syscall_object, pid)
-        except KeyError:
+        found = False
+        for i in handlers.keys():
+            if syscall_id == i[0]:
+                found = True
+        if not found:
             raise NotImplementedError('Encountered un-ignored syscall {} '
                                       'with no handler: {}({})'
                                       .format('entry' if entering else 'exit',
                                               syscall_id,
                                               syscall_object.name))
+        handlers[(syscall_id, entering)](syscall_id, syscall_object, pid)
 
 def parse_backing_files(bfs):
     if bfs[-1] != ';':
