@@ -167,7 +167,6 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         ## (125, False): check_return_value_exit_handler,
         ## mmap2 calls are never replayed. Sometimes we must fix a file
         ## descriptor  in position 4.
-        #(196, True): lstat64_entry_handler,
         #(20, True): syscall_return_success_handler,
         #(30, True): syscall_return_success_handler,
         #(38, True): rename_entry_handler,
@@ -191,8 +190,10 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         (146, True): file_handlers.writev_entry_handler,
         #(146, False): writev_exit_handler,
         (183, True): file_handlers.getcwd_entry_handler,
+        (187, True): send_handlers.sendfile_entry_handler,
         (192, True): kernel_handlers.mmap2_entry_handler,
         (192, False): kernel_handlers.mmap2_exit_handler,
+        (196, True): file_handlers.lstat64_entry_handler,
         (197, True): file_handlers.fstat64_entry_handler,
         #(197, False): check_return_value_exit_handler,
         #(122, True): uname_entry_handler,
