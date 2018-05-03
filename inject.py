@@ -88,6 +88,24 @@ def handle_socketcall(syscall_id, syscall_object, entering, pid):
                                   syscall_object.name,
                                   'entry' if entering else 'exit')
 
+
+def debug_handle_syscall(pid, syscall_id, syscall_object, entering):
+    try:
+        handle_syscall(pid, syscall_id, syscall_object, entering)
+    except ReplayDeltaError as e:
+        debug_printers = {
+            4: file_handlers.write_entry_debug_printer,
+            5: file_handlers.open_entry_debug_printer,
+            197: file_handlers.fstat64_entry_debug_printer,
+            146: file_handlers.writev_entry_debug_printer,
+            }
+        if syscall_id in debug_printers.keys():
+            debug_printers[syscall_id](pid, syscall_id, syscall_object)
+        else:
+            logging.debug('No debug printer associated with syscall_id')
+        raise
+
+
 def handle_syscall(pid, syscall_id, syscall_object, entering):
     ''' Validate the id of the system call against the name of the system call
     we are expecting based on the current system call object.  Then hand off
@@ -122,6 +140,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
             forgers[syscall_id](pid)
             return
     util.validate_syscall(syscall_id, syscall_object)
+
     # We ignore these system calls because they have to do with aspecs of
     # execution that we don't want to try to replay and, at the same time,
     # don't have interesting information that we want to validate with a
@@ -283,6 +302,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
                                               syscall_object.name))
         handlers[(syscall_id, entering)](syscall_id, syscall_object, pid)
 
+
 def parse_backing_files(bfs):
     if bfs[-1] != ';':
         bfs += ';'
@@ -327,7 +347,7 @@ if __name__ == '__main__':
     while not os.WIFEXITED(status):
         syscall_object = syscallreplay.syscalls[syscallreplay.syscall_index]
         try:
-            handle_syscall(pid,
+            debug_handle_syscall(pid,
                            syscallreplay.peek_register(pid,
                                                        syscallreplay.ORIG_EAX),
                            syscall_object,
