@@ -73,7 +73,7 @@ def handle_socketcall(syscall_id, syscall_object, entering, pid):
         #('recvmsg', True): recvmsg_entry_handler,
         #('recvmsg', False): recvmsg_exit_handler,
         ('getsockname', True): socket_handlers.getsockname_entry_handler,
-        #('getpeername', True): getpeername_entry_handler
+        ('getpeername', True): socket_handlers.getpeername_entry_handler
     }
     # The subcall id of the socket subcall is located in the EBX register
     # according to our Linux's convention.
@@ -170,8 +170,6 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         ## (9, True): check_return_value_entry_handler,
         ## (9, False): check_return_value_exit_handler,
         #(12, True): syscall_return_success_handler,
-        ## (195, True): check_return_value_entry_handler,
-        ## (195, False): check_return_value_exit_handler,
         #(39, True): check_return_value_entry_handler,
         #(39, False): check_return_value_exit_handler,
         (10, True): file_handlers.unlink_entry_handler,
@@ -203,6 +201,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(145, True): readv_entry_handler,
         #(145, False): check_return_value_exit_handler,
         (78, True): time_handlers.gettimeofday_entry_handler,
+        (122, True): kernel_handlers.uname_entry_handler,
         (140, True): file_handlers.llseek_entry_handler,
         (140, False): file_handlers.llseek_exit_handler,
         (142, True): multiplex_handlers.select_entry_handler,
@@ -215,7 +214,6 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         (196, True): file_handlers.lstat64_entry_handler,
         (197, True): file_handlers.fstat64_entry_handler,
         #(197, False): check_return_value_exit_handler,
-        #(122, True): uname_entry_handler,
         #(42, True): pipe_entry_handler,
         ## (10, True): syscall_return_success_handler,
         #(33, True): syscall_return_success_handler,
@@ -234,9 +232,9 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(54, False): ioctl_exit_handler,
         (174, True): kernel_handlers.rt_sigaction_entry_handler,
         (195, True): file_handlers.stat64_entry_handler,
+        (219, True): generic_handlers.syscall_return_success_handler,
         (220, True): file_handlers.getdents64_entry_handler,
         (221, True): file_handlers.fcntl64_entry_handler,
-        #(195, False): check_return_value_exit_handler,
         #(141, True): getdents_entry_handler,
         #(142, False): getdents_exit_handler,
         #(82, True): select_entry_handler,
