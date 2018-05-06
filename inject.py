@@ -280,7 +280,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         #(301, True): unlinkat_entry_handler,
         #(301, False): check_return_value_exit_handler,
         #(311, True): syscall_return_success_handler,
-        #(320, True): utimensat_entry_handler,
+        (320, True): time_handlers.utimensat_entry_handler,
         #(320, False): check_return_value_exit_handler,
         (328, True): file_handlers.eventfd2_entry_handler,
         #(340, True): prlimit64_entry_handler,
