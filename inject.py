@@ -56,7 +56,7 @@ def handle_socketcall(syscall_id, syscall_object, entering, pid):
         #('accept', False): accept_subcall_entry_handler,
         ('bind', True): socket_handlers.bind_entry_handler,
         #('bind', False): bind_exit_handler,
-        #('listen', True): listen_entry_handler,
+        ('listen', True): socket_handlers.listen_entry_handler,
         #('listen', False): listen_exit_handler,
         ('recv', True): recv_handlers.recv_subcall_entry_handler,
         #('recvfrom', True): recvfrom_subcall_entry_handler,
@@ -131,6 +131,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
     forgers = {
         13: time_handlers.time_forger,
         78: time_handlers.gettimeofday_forger,
+        265: time_handlers.clock_gettime_forger,
     }
     # if there is a forger registerd, check for a mismatch between the called
     # syscall and the trace syscall -- indicating we need to forge a call that
@@ -186,9 +187,9 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
         ## descriptor  in position 4.
         #(20, True): syscall_return_success_handler,
         #(30, True): syscall_return_success_handler,
-        #(38, True): rename_entry_handler,
+        (38, True): file_handlers.rename_entry_handler,
         #(38, False): check_return_value_exit_handler,
-        #(15, True): syscall_return_success_handler,
+        (15, True): generic_handlers.syscall_return_success_handler,
         (13, True): time_handlers.time_entry_handler,
         #(27, True): syscall_return_success_handler,
         (5, True): file_handlers.open_entry_handler,
