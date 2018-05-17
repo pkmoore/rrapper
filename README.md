@@ -1,13 +1,21 @@
 # Overview
 
-This repository contains the scripts that work alongside the modified version of
-rr located [here](https://github.com/pkmoore/rr).
+This fork made by Alan <ex0dus-0x> contains the scripts that work alongside the modified version of
+rr located [here](https://github.com/pkmoore/rr), as well as modifications and enhancements for better usability.
 
 # Requirements
 
-* Supported OS: uname -a Linux dev.local 3.19.0-49-generic #55-Ubuntu SMP Fri Jan 22 02:09:44 UTC 2016 i686 i686 i686 GNU/Linux
+* Supported OS:
 
-* ASLR Disabled: echo 0 | sudo tee /proc/sys/kernel/randomize\_va\_space
+```
+uname -a Linux dev.local 3.19.0-49-generic #55-Ubuntu SMP Fri Jan 22 02:09:44 UTC 2016 i686 i686 i686 GNU/Linux
+```
+
+* ASLR Disabled:
+
+```
+echo 0 | sudo tee /proc/sys/kernel/randomize\_va\_space
+```
 
 * kernel.randomize\_va\_space = 0 #in /etc/sysctl.d/01-disable-aslr.conf
 

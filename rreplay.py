@@ -1,4 +1,8 @@
-"""Run rr and attach injectors appropriately based on the specified config
+#!/usr/bin/env python
+
+"""
+Run rr and attach injectors appropriately based on the specified config
+
 """
 from __future__ import print_function
 
@@ -27,7 +31,42 @@ def _get_message(pipe_name):
         if buf[-1] == '\n':
             return buf
 
+def main():
+
+    # check to see if rrdump pipe exists, and if so, unlink
+    if os.path.exists('rrdump_proc.pipe'):
+        os.unlink('rrdump_proc.pipe')
+
+    # argument parsing
+    if len(sys.argv) < 2:
+        print("Invalid number of arguments:\n\tpython rreplay.py [CONFIG_PATH]\n")
+        exit(1)
+
+    # instantiate new SafeConfigParser, parse path to config
+    cfg = ConfigParser.SafeConfigParser()
+    cfg.read(sys.argv[1])
+
+    subjects = []
+    sections = cfg.sections()
+    rr_dir_section = sections[0]
+    rr_dir = cf.gget(rr_dir_section, 'rr_dir')
+    sections = sections[1:]
+
+    for i in sections:
+        s = {}
+        s['event'] = cfg.get(i, 'event')
+        s['rec_pid'] = cfg.get(i, 'pid')
+        s['trace_file'] = cfg.get(i, 'trace_file')
+        s['trace_start'] = cfg.get(i, 'trace_start')
+        s['trace_end'] = cfg.get(i, 'trace_end')
+        s['injected_state_file'] = str(cfg.get(i, 'event')) + '_state.json'
+        s['other_procs'] = []
+
+        # TODO
+
 if __name__ == '__main__':
+    main()
+    '''
     if os.path.exists('rrdump_proc.pipe'):
         os.unlink('rrdump_proc.pipe')
     cfg = ConfigParser.SafeConfigParser()
@@ -110,3 +149,4 @@ if __name__ == '__main__':
     f.close()
     os.unlink('proc.out')
     os.unlink('rrdump_proc.pipe')
+    '''
