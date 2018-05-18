@@ -2,7 +2,6 @@
 
 """
 Run rr and attach injectors appropriately based on the specified config
-
 """
 from __future__ import print_function
 
@@ -15,6 +14,7 @@ import re
 import ConfigParser
 import time
 import json
+import commands
 
 rrdump_pipe = None
 def _get_message(pipe_name):
@@ -37,46 +37,31 @@ def main():
     if os.path.exists('rrdump_proc.pipe'):
         os.unlink('rrdump_proc.pipe')
 
-    # argument parsing
+    # check to see rr is a valid shell-level command
+    status, _ = commands.getstatusoutput('rr')
+    if status != 0:
+        print("Unable to call rr command. Is it installed or in PATH?")
+        exit(1)
+
+    # ensure that positional argument is passed to represent path to config
     if len(sys.argv) < 2:
         print("Invalid number of arguments:\n\tpython rreplay.py [CONFIG_PATH]\n")
         exit(1)
 
-    # instantiate new SafeConfigParser, parse path to config
+    # instantiate new SafeConfigParser, read path to config
     cfg = ConfigParser.SafeConfigParser()
     cfg.read(sys.argv[1])
 
+    # instantiate vars and parse config by retrieving sections
     subjects = []
     sections = cfg.sections()
+
+    # set rr_dir as specified key-value pair in config, cut out first element in list
     rr_dir_section = sections[0]
-    rr_dir = cf.gget(rr_dir_section, 'rr_dir')
+    rr_dir = cf.get(rr_dir_section, 'rr_dir')
     sections = sections[1:]
 
-    for i in sections:
-        s = {}
-        s['event'] = cfg.get(i, 'event')
-        s['rec_pid'] = cfg.get(i, 'pid')
-        s['trace_file'] = cfg.get(i, 'trace_file')
-        s['trace_start'] = cfg.get(i, 'trace_start')
-        s['trace_end'] = cfg.get(i, 'trace_end')
-        s['injected_state_file'] = str(cfg.get(i, 'event')) + '_state.json'
-        s['other_procs'] = []
-
-        # TODO
-
-if __name__ == '__main__':
-    main()
-    '''
-    if os.path.exists('rrdump_proc.pipe'):
-        os.unlink('rrdump_proc.pipe')
-    cfg = ConfigParser.SafeConfigParser()
-    cfg.read(sys.argv[1])
-    #os.environ['RR_LOG'] = 'ReplaySession'
-    subjects = []
-    sections = cfg.sections()
-    rr_dir_section = sections[0]
-    rr_dir = cfg.get(rr_dir_section, 'rr_dir')
-    sections = sections[1:]
+    # for each following item
     for i in sections:
         s = {}
         s['event'] = cfg.get(i, 'event')
@@ -93,14 +78,20 @@ if __name__ == '__main__':
         except ConfigParser.NoOptionError:
             pass
         subjects.append(s)
+
+    # create a new event string listing pid to record and event to listen for (e.g 14350:16154)
     events_str = ''
     for i in subjects:
         events_str += i['rec_pid'] + ':' + i['event'] + ','
+
+    # instantiate thread-safe OS-executed command with output tossed into proc.out
     command = ['rr', 'replay', '-a', '-n', events_str, rr_dir]
     f = open('proc.out', 'w')
     proc = subprocess.Popen(command, stdout=f, stderr=f)
+
     subject_index = 0
     handles = []
+
     # A message on the pipe looks like:
     # INJECT: EVENT: <event number> PID: <pid> REC_PID: <rec_pid>\n
     # or
@@ -115,6 +106,7 @@ if __name__ == '__main__':
         rec_pid = parts[6].strip()
 
         operating = [x for x in subjects if x['event'] == event]
+
         # HACK HACK HACK: we only support spinning off once per event now
         s = operating[0]
         if inject == 'INJECT':
@@ -149,4 +141,6 @@ if __name__ == '__main__':
     f.close()
     os.unlink('proc.out')
     os.unlink('rrdump_proc.pipe')
-    '''
+
+if __name__ == '__main__':
+    main()
