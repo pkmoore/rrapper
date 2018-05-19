@@ -16,13 +16,18 @@ import time
 import json
 import commands
 
+# TODO: maybe a more functional approach, rather than use a global declaration?
 rrdump_pipe = None
 def _get_message(pipe_name):
     global rrdump_pipe
+
+    # check if pipe path exists
     if not rrdump_pipe:
         while not os.path.exists(pipe_name):
             continue
         rrdump_pipe = open(pipe_name, 'r')
+
+    # read message from pipe into buffer, and return
     buf = ''
     while True:
         buf += rrdump_pipe.read(1)
@@ -38,7 +43,7 @@ def main():
         os.unlink('rrdump_proc.pipe')
 
     # check to see rr is a valid shell-level command
-    status, _ = commands.getstatusoutput('rr')
+    status, _ = commands.getstatusoutput('rr help')
     if status != 0:
         print("Unable to call rr command. Is it installed or in PATH?")
         exit(1)
@@ -49,6 +54,7 @@ def main():
         exit(1)
 
     # instantiate new SafeConfigParser, read path to config
+    print("-- Begin parsing INI configuration file")
     cfg = ConfigParser.SafeConfigParser()
     cfg.read(sys.argv[1])
 
@@ -57,8 +63,9 @@ def main():
     sections = cfg.sections()
 
     # set rr_dir as specified key-value pair in config, cut out first element in list
+    print("-- Discovering replay directory")
     rr_dir_section = sections[0]
-    rr_dir = cf.get(rr_dir_section, 'rr_dir')
+    rr_dir = cfg.get(rr_dir_section, 'rr_dir')
     sections = sections[1:]
 
     # for each following item
@@ -84,6 +91,7 @@ def main():
     for i in subjects:
         events_str += i['rec_pid'] + ':' + i['event'] + ','
 
+    print("-- Executing replay command and writing to proc.out")
     # instantiate thread-safe OS-executed command with output tossed into proc.out
     command = ['rr', 'replay', '-a', '-n', events_str, rr_dir]
     f = open('proc.out', 'w')
@@ -124,6 +132,8 @@ def main():
             s['other_procs'].append(pid)
         if subjects_injected == len(subjects):
             break
+
+    # TODO: interpret and understand
     for s in subjects:
         if 'handle' in s:
             ret = s['handle'].wait()
@@ -143,4 +153,9 @@ def main():
     os.unlink('rrdump_proc.pipe')
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        # TODO: clean signal handling
+        print("! Killing rrapper")
+        exit(0)

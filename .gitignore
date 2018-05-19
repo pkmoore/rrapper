@@ -1,3 +1,4 @@
 *.pyc
-.projectile
+*.projectile
+*.out
 syscall_definitions.pickle
