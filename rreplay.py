@@ -53,6 +53,10 @@ def main():
         print("Invalid number of arguments:\n\tpython rreplay.py [CONFIG_PATH]\n")
         exit(1)
 
+    # ensure that the specified configuration file exists
+    if not os.path.isfile(sys.argv[1]) is True:
+        print("INI configuration file does not exist: %s", sys.argv[1])
+
     # instantiate new SafeConfigParser, read path to config
     print("-- Begin parsing INI configuration file")
     cfg = ConfigParser.SafeConfigParser()
@@ -156,6 +160,13 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        # TODO: clean signal handling
-        print("! Killing rrapper")
+        print("! Killing rrapper\nDumping proc.out")
+
+        # read output
+        with open('proc.out', 'r') as content_file:
+            print(content_file.read())
+
+        # ensure clean exit by unlinking
+        os.unlink('proc.out')
+        os.unlink('rrdump_proc.pipe')
         exit(0)
