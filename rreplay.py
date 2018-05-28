@@ -7,9 +7,7 @@ import os.path
 import signal
 import sys
 import subprocess
-import re
 import ConfigParser
-import time
 import json
 
 rrdump_pipe = None
@@ -85,9 +83,9 @@ if __name__ == '__main__':
             tmp['config'] = s
             with open(s['injected_state_file'], 'w') as d:
                 json.dump(tmp, d)
-            s['handle'] =  subprocess.Popen(['python',
-                                             './inject.py',
-                                             s['injected_state_file']])
+            s['handle'] = subprocess.Popen(['python',
+                                            './inject.py',
+                                            s['injected_state_file']])
             subjects_injected += 1
         elif inject == 'DONT_INJECT':
             s['other_procs'].append(pid)
