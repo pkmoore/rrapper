@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """
 Run rr and attach injectors appropriately based on the specified config
@@ -15,6 +15,11 @@ import ConfigParser
 import time
 import json
 import commands
+import logging
+
+# introduced this for debugging purposes. can later pass as verbosity flag for actual arg parsing
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # TODO: maybe a more functional approach, rather than use a global declaration?
 rrdump_pipe = None
@@ -42,7 +47,7 @@ def main():
     if os.path.exists('rrdump_proc.pipe'):
         os.unlink('rrdump_proc.pipe')
 
-    # check to see rr is a valid shell-level command
+    # check to see rr is a valid shell-level command. Error status is nonzero
     status, _ = commands.getstatusoutput('rr help')
     if status != 0:
         print("Unable to call rr command. Is it installed or in PATH?")
@@ -58,7 +63,7 @@ def main():
         print("INI configuration file does not exist: %s", sys.argv[1])
 
     # instantiate new SafeConfigParser, read path to config
-    print("-- Begin parsing INI configuration file")
+    logger.debug("-- Begin parsing INI configuration file")
     cfg = ConfigParser.SafeConfigParser()
     cfg.read(sys.argv[1])
 
@@ -67,7 +72,7 @@ def main():
     sections = cfg.sections()
 
     # set rr_dir as specified key-value pair in config, cut out first element in list
-    print("-- Discovering replay directory")
+    logger.debug("-- Discovering replay directory")
     rr_dir_section = sections[0]
     rr_dir = cfg.get(rr_dir_section, 'rr_dir')
     sections = sections[1:]
@@ -95,7 +100,7 @@ def main():
     for i in subjects:
         events_str += i['rec_pid'] + ':' + i['event'] + ','
 
-    print("-- Executing replay command and writing to proc.out")
+    logger.debug("-- Executing replay command and writing to proc.out")
     # instantiate thread-safe OS-executed command with output tossed into proc.out
     command = ['rr', 'replay', '-a', '-n', events_str, rr_dir]
     f = open('proc.out', 'w')
@@ -134,8 +139,6 @@ def main():
             subjects_injected += 1
         elif inject == 'DONT_INJECT':
             s['other_procs'].append(pid)
-        if subjects_injected == len(subjects):
-            break
 
     # TODO: interpret and understand
     for s in subjects:
@@ -160,7 +163,7 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        print("! Killing rrapper\nDumping proc.out")
+        logger.debug("Killing rrapper\nDumping proc.out")
 
         # read output
         with open('proc.out', 'r') as content_file:

@@ -1,7 +1,6 @@
 # Overview
 
-This fork made by Alan <ex0dus-0x> contains the scripts that work alongside the modified version of
-rr located [here](https://github.com/pkmoore/rr), as well as modifications and enhancements for better usability.
+-This repository contains the scripts that work alongside the modified version of rr located [here](https://github.com/pkmoore/rr).
 
 # Requirements
 
