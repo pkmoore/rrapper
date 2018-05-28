@@ -1,3 +1,4 @@
+# pylint: disable=missing-docstring, unused-argument, invalid-name,
 """Run rr and attach injectors appropriately based on the specified config
 """
 from __future__ import print_function
@@ -10,6 +11,7 @@ import subprocess
 import ConfigParser
 import json
 
+# pylint: disable=global-statement
 rrdump_pipe = None
 def _get_message(pipe_name):
     global rrdump_pipe
@@ -24,6 +26,7 @@ def _get_message(pipe_name):
             return ''
         if buf[-1] == '\n':
             return buf
+# pylint: enable=global-statement
 
 if __name__ == '__main__':
     if os.path.exists('rrdump_proc.pipe'):
