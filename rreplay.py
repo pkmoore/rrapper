@@ -16,10 +16,7 @@ import time
 import json
 import commands
 import logging
-
-# introduced this for debugging purposes. can later pass as verbosity flag for actual arg parsing
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+import argparse
 
 # TODO: maybe a more functional approach, rather than use a global declaration?
 rrdump_pipe = None
@@ -43,6 +40,13 @@ def _get_message(pipe_name):
 
 def main():
 
+    # initialize argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v', '--verbosity', dest='verbosity', help='output based on verbosity level')
+    parser.add_argument('path', help='specify INI configuration path for replay')
+
+    args = parser.parse_args()
+
     # check to see if rrdump pipe exists, and if so, unlink
     if os.path.exists('rrdump_proc.pipe'):
         os.unlink('rrdump_proc.pipe')
@@ -53,19 +57,26 @@ def main():
         print("Unable to call rr command. Is it installed or in PATH?")
         exit(1)
 
-    # ensure that positional argument is passed to represent path to config
-    if len(sys.argv) < 2:
-        print("Invalid number of arguments:\n\tpython rreplay.py [CONFIG_PATH]\n")
-        exit(1)
-
     # ensure that the specified configuration file exists
-    if not os.path.isfile(sys.argv[1]) is True:
-        print("INI configuration file does not exist: %s", sys.argv[1])
+    if not os.path.isfile(args.path) is True:
+        print("INI configuration file does not exist: %s", args.path)
+
+    # check for verbosity flag
+    if args.verbosity == "1":
+        log_level = logging.INFO
+    elif args.verbosity == "2":
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.ERROR
+
+    # set level of logging based on argument parsing
+    logging.basicConfig(level=log_level)
+    logger = logging.getLogger(__name__)
 
     # instantiate new SafeConfigParser, read path to config
     logger.debug("-- Begin parsing INI configuration file")
     cfg = ConfigParser.SafeConfigParser()
-    cfg.read(sys.argv[1])
+    cfg.read(args.path)
 
     # instantiate vars and parse config by retrieving sections
     subjects = []
