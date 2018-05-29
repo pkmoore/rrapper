@@ -7,7 +7,6 @@ from __future__ import print_function
 import os
 import os.path
 import signal
-import sys
 import subprocess
 import ConfigParser
 import json
@@ -17,6 +16,8 @@ import argparse
 
 # pylint: disable=global-statement
 rrdump_pipe = None
+
+
 def _get_message(pipe_name):
     global rrdump_pipe
 
@@ -80,7 +81,8 @@ def main():
     subjects = []
     sections = cfg.sections()
 
-    # set rr_dir as specified key-value pair in config, cut out first element in list
+    # set rr_dir as specified key-value pair in config, cut out first element
+    # in list
     logger.debug("-- Discovering replay directory")
     rr_dir_section = sections[0]
     rr_dir = cfg.get(rr_dir_section, 'rr_dir')
@@ -104,13 +106,15 @@ def main():
             pass
         subjects.append(s)
 
-    # create a new event string listing pid to record and event to listen for (e.g 14350:16154)
+    # create a new event string listing pid to record and event to listen for
+    # (e.g 14350:16154)
     events_str = ''
     for i in subjects:
         events_str += i['rec_pid'] + ':' + i['event'] + ','
 
     logger.debug("-- Executing replay command and writing to proc.out")
-    # instantiate thread-safe OS-executed command with output tossed into proc.out
+    # instantiate thread-safe OS-executed command with output tossed into
+    # proc.out
     command = ['rr', 'replay', '-a', '-n', events_str, rr_dir]
     f = open('proc.out', 'w')
     proc = subprocess.Popen(command, stdout=f, stderr=f)
@@ -149,7 +153,6 @@ def main():
         elif inject == 'DONT_INJECT':
             s['other_procs'].append(pid)
 
-    # TODO: interpret and understand
     for s in subjects:
         if 'handle' in s:
             ret = s['handle'].wait()
