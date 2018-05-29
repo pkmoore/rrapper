@@ -44,11 +44,10 @@ def get_configuration(ini_path):
     # instantiate new SafeConfigParser, read path to config
     logger.debug("-- Begin parsing INI configuration file")
     cfg = ConfigParser.SafeConfigParser()
-    try:
-        cfg.read(ini_path)
-    except IOError:
-        print("INI configuration file does not exist: %s", ini_path)
-        raise
+    found = cfg.read(ini_path)
+    if ini_path not in found:
+        raise IOError('INI configuration could not be read: {}'
+                      .format(ini_path))
 
     # instantiate vars and parse config by retrieving sections
     subjects = []
@@ -103,7 +102,6 @@ def process_messages(subjects):
     subjects_injected = 0
     message = get_message('rrdump_proc.pipe')
     while message != '':
-        print(message)
         parts = message.split(' ')
         inject = parts[0].strip()[:-1]
         event = parts[2]
