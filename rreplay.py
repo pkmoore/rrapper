@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
-
-"""
-Run rr and attach injectors appropriately based on the specified config
+# pylint: disable=missing-docstring, unused-argument, invalid-name,
+"""Run rr and attach injectors appropriately based on the specified config
 """
 from __future__ import print_function
 
@@ -10,15 +9,13 @@ import os.path
 import signal
 import sys
 import subprocess
-import re
 import ConfigParser
-import time
 import json
 import commands
 import logging
 import argparse
 
-# TODO: maybe a more functional approach, rather than use a global declaration?
+# pylint: disable=global-statement
 rrdump_pipe = None
 def _get_message(pipe_name):
     global rrdump_pipe
@@ -37,6 +34,7 @@ def _get_message(pipe_name):
             return ''
         if buf[-1] == '\n':
             return buf
+# pylint: enable=global-statement
 
 def main():
 
@@ -144,9 +142,9 @@ def main():
             tmp['config'] = s
             with open(s['injected_state_file'], 'w') as d:
                 json.dump(tmp, d)
-            s['handle'] =  subprocess.Popen(['python',
-                                             './inject.py',
-                                             s['injected_state_file']])
+            s['handle'] = subprocess.Popen(['python',
+                                            './inject.py',
+                                            s['injected_state_file']])
             subjects_injected += 1
         elif inject == 'DONT_INJECT':
             s['other_procs'].append(pid)

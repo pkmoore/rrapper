@@ -1,3 +1,6 @@
+""" Attach to a spun-off process and perform all CrashSimulator's business
+"""
+
 from __future__ import print_function
 import sys
 import os
@@ -92,7 +95,7 @@ def handle_socketcall(syscall_id, syscall_object, entering, pid):
 def debug_handle_syscall(pid, syscall_id, syscall_object, entering):
     try:
         handle_syscall(pid, syscall_id, syscall_object, entering)
-    except ReplayDeltaError as e:
+    except ReplayDeltaError:
         debug_printers = {
             4: file_handlers.write_entry_debug_printer,
             5: file_handlers.open_entry_debug_printer,
@@ -347,10 +350,10 @@ if __name__ == '__main__':
         syscall_object = syscallreplay.syscalls[syscallreplay.syscall_index]
         try:
             debug_handle_syscall(pid,
-                           syscallreplay.peek_register(pid,
-                                                       syscallreplay.ORIG_EAX),
-                           syscall_object,
-                           syscallreplay.entering_syscall)
+                                 syscallreplay.peek_register(pid,
+                                                             syscallreplay.ORIG_EAX),
+                                 syscall_object,
+                                 syscallreplay.entering_syscall)
         except:
             traceback.print_exc()
             print('Failed to complete trace')
