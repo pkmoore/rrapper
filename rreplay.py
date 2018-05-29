@@ -14,11 +14,13 @@ import commands
 import logging
 import argparse
 
+logger = None
+
 # pylint: disable=global-statement
 rrdump_pipe = None
 
 
-def _get_message(pipe_name):
+def get_message(pipe_name):
     global rrdump_pipe
 
     # check if pipe path exists
@@ -37,45 +39,16 @@ def _get_message(pipe_name):
             return buf
 # pylint: enable=global-statement
 
-def main():
 
-    # initialize argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--verbosity', dest='verbosity', help='output based on verbosity level')
-    parser.add_argument('path', help='specify INI configuration path for replay')
-
-    args = parser.parse_args()
-
-    # check to see if rrdump pipe exists, and if so, unlink
-    if os.path.exists('rrdump_proc.pipe'):
-        os.unlink('rrdump_proc.pipe')
-
-    # check to see rr is a valid shell-level command. Error status is nonzero
-    status, _ = commands.getstatusoutput('rr help')
-    if status != 0:
-        print("Unable to call rr command. Is it installed or in PATH?")
-        exit(1)
-
-    # ensure that the specified configuration file exists
-    if not os.path.isfile(args.path) is True:
-        print("INI configuration file does not exist: %s", args.path)
-
-    # check for verbosity flag
-    if args.verbosity == "1":
-        log_level = logging.INFO
-    elif args.verbosity == "2":
-        log_level = logging.DEBUG
-    else:
-        log_level = logging.ERROR
-
-    # set level of logging based on argument parsing
-    logging.basicConfig(level=log_level)
-    logger = logging.getLogger(__name__)
-
+def get_configuration(ini_path):
     # instantiate new SafeConfigParser, read path to config
     logger.debug("-- Begin parsing INI configuration file")
     cfg = ConfigParser.SafeConfigParser()
-    cfg.read(args.path)
+    try:
+        cfg.read(ini_path)
+    except IOError:
+        print("INI configuration file does not exist: %s", ini_path)
+        raise
 
     # instantiate vars and parse config by retrieving sections
     subjects = []
@@ -105,7 +78,10 @@ def main():
         except ConfigParser.NoOptionError:
             pass
         subjects.append(s)
+    return rr_dir, subjects
 
+
+def execute_rr(rr_dir, subjects):
     # create a new event string listing pid to record and event to listen for
     # (e.g 14350:16154)
     events_str = ''
@@ -113,27 +89,25 @@ def main():
         events_str += i['rec_pid'] + ':' + i['event'] + ','
 
     logger.debug("-- Executing replay command and writing to proc.out")
-    # instantiate thread-safe OS-executed command with output tossed into
-    # proc.out
+    # execute rr with spin-off switch.  Output tossed into proc.out
     command = ['rr', 'replay', '-a', '-n', events_str, rr_dir]
-    f = open('proc.out', 'w')
-    proc = subprocess.Popen(command, stdout=f, stderr=f)
+    with open('proc.out', 'w') as f:
+        subprocess.Popen(command, stdout=f, stderr=f)
 
-    subject_index = 0
-    handles = []
 
+def process_messages(subjects):
     # A message on the pipe looks like:
     # INJECT: EVENT: <event number> PID: <pid> REC_PID: <rec_pid>\n
     # or
     # DONT_INJECT: EVENT: <event number> PID: <pid> REC_PID: <rec_pid>\n
     subjects_injected = 0
-    while True:
-        message = _get_message('rrdump_proc.pipe')
+    message = get_message('rrdump_proc.pipe')
+    while message != '':
+        print(message)
         parts = message.split(' ')
         inject = parts[0].strip()[:-1]
         event = parts[2]
         pid = parts[4]
-        rec_pid = parts[6].strip()
 
         operating = [x for x in subjects if x['event'] == event]
 
@@ -152,7 +126,10 @@ def main():
             subjects_injected += 1
         elif inject == 'DONT_INJECT':
             s['other_procs'].append(pid)
+        message = get_message('rrdump_proc.pipe')
 
+
+def wait_on_handles(subjects):
     for s in subjects:
         if 'handle' in s:
             ret = s['handle'].wait()
@@ -167,13 +144,63 @@ def main():
         if ret != 0:
             print('Injector for event:rec_pid {}:{} failed'
                   .format(s['event'], s['rec_pid']))
-    f.close()
+
+
+def cleanup():
     os.unlink('proc.out')
     os.unlink('rrdump_proc.pipe')
 
+
+def main(ini_path):
+    rr_dir, subjects = get_configuration(ini_path)
+    execute_rr(rr_dir, subjects)
+    process_messages(subjects)
+    wait_on_handles(subjects)
+    cleanup()
+
+
+def parse_arguments():
+    # initialize argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v',
+                        '--verbosity',
+                        dest='verbosity',
+                        help='output based on verbosity level')
+    parser.add_argument('path',
+                        help='specify INI configuration path for replay')
+
+    return parser.parse_args()
+
+
+def configure_logging(level):
+    # pylint: disable=global-statement
+    global logger
+    log_levels = {"1": logging.INFO, "2": logging.DEBUG}
+    logging.basicConfig(level=log_levels.get(args.verbosity, logging.ERROR))
+    # set level of logging based on argument parsing
+    logger = logging.getLogger(__name__)
+    # pylint: enable=global-statement
+
+
+def check_environment(ini_path):
+    # check to see if rrdump pipe exists, and if so, unlink
+    if os.path.exists('rrdump_proc.pipe'):
+        os.unlink('rrdump_proc.pipe')
+
+    # check to see rr is a valid shell-level command. Error status is nonzero
+    status, _ = commands.getstatusoutput('rr help')
+    if status != 0:
+        logger.debug("Unable to call rr command. Is it installed or in PATH?")
+        exit(1)
+
+
 if __name__ == '__main__':
+    args = parse_arguments()
+    configure_logging(args.verbosity)
+    check_environment(args.path)
+
     try:
-        main()
+        main(args.path)
     except KeyboardInterrupt:
         logger.debug("Killing rrapper\nDumping proc.out")
 
@@ -182,6 +209,5 @@ if __name__ == '__main__':
             print(content_file.read())
 
         # ensure clean exit by unlinking
-        os.unlink('proc.out')
-        os.unlink('rrdump_proc.pipe')
+        cleanup()
         exit(0)
