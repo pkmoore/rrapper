@@ -190,7 +190,7 @@ def configure_logging(level):
     # pylint: enable=global-statement
 
 
-def check_environment(ini_path):
+def check_environment():
     # check to see if rrdump pipe exists, and if so, unlink
     if os.path.exists('rrdump_proc.pipe'):
         os.unlink('rrdump_proc.pipe')
@@ -205,7 +205,7 @@ def check_environment(ini_path):
 if __name__ == '__main__':
     args = parse_arguments()
     configure_logging(args.verbosity)
-    check_environment(args.path)
+    check_environment()
 
     try:
         main(args.path)
