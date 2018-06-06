@@ -24,6 +24,9 @@ from syscallreplay import multiplex_handlers
 from syscallreplay import util
 from syscallreplay.util import ReplayDeltaError
 
+from checker.checker import NullChecker
+from mutator.mutator import NullMutator
+
 sys.path.append('posix-omni-parser/')
 import Trace
 
@@ -333,6 +336,12 @@ if __name__ == '__main__':
     syscallreplay.syscall_index_end = int(syscallreplay.injected_state['config']['trace_end'])
     if 'mmap_backing_files' in syscallreplay.injected_state['config']:
         syscallreplay.injected_state['config']['mmap_backing_files'] = parse_backing_files(syscallreplay.injected_state['config']['mmap_backing_files'])
+    if 'checker' in syscallreplay.injected_state['config']:
+        checker = eval(syscallreplay.injected_state['config']['checker'])
+    if 'mutator' in syscallreplay.injected_state['config']:
+        mutator = eval(syscallreplay.injected_state['config']['mutator'])
+        logging.debug('Mutating trace with {}'.format(mutator))
+        mutator.mutate_trace(trace)
 
     # Requires kernel.yama.ptrace_scope = 0
     # in /etc/sysctl.d/10-ptrace.conf
@@ -359,6 +368,8 @@ if __name__ == '__main__':
             print('Failed to complete trace')
             _kill_parent_process(pid)
             sys.exit(1)
+        if checker:
+            checker.transition(syscall_object)
         if not syscallreplay.entering_syscall:
             syscallreplay.syscall_index += 1
         syscallreplay.entering_syscall = not syscallreplay.entering_syscall
@@ -368,3 +379,10 @@ if __name__ == '__main__':
             print('Completed the trace')
             _kill_parent_process(pid)
             sys.exit(0)
+    if checker:
+        print('####    Checker Status    ####')
+        if checker.is_accepting():
+            print('{} accepted'.format(checker))
+        else:
+            print('{} not accepted'.format(checker))
+        print('####  End Checker Status  ####')

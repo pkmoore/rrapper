@@ -76,6 +76,16 @@ def get_configuration(ini_path):
             s['mmap_backing_files'] = cfg.get(i, 'mmap_backing_files')
         except ConfigParser.NoOptionError:
             pass
+        # checkers are also optional
+        try:
+            s['checker'] = cfg.get(i, 'checker')
+        except ConfigParser.NoOptionError:
+            pass
+        try:
+            s['mutator'] = cfg.get(i, 'mutator')
+        except ConfigParser.NoOptionError:
+            pass
+
         subjects.append(s)
     return rr_dir, subjects
 
