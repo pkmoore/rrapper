@@ -10,6 +10,8 @@ import traceback
 
 import logging
 
+from posix_omni_parser import Trace
+
 from syscallreplay import syscall_dict
 
 from syscallreplay import syscallreplay
@@ -26,9 +28,6 @@ from syscallreplay.util import ReplayDeltaError
 
 from checker.checker import NullChecker
 from mutator.mutator import NullMutator
-
-sys.path.append('posix-omni-parser/')
-import Trace
 
 logging.basicConfig(stream=sys.stderr, level=4)
 
