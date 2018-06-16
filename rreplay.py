@@ -13,6 +13,7 @@ import json
 import commands
 import logging
 import argparse
+from syscallreplay.util import process_is_alive
 
 logger = None
 
@@ -116,7 +117,9 @@ def process_messages(subjects):
         inject = parts[0].strip()[:-1]
         event = parts[2]
         pid = parts[4]
-
+        # Wait until we can see the process reported by rr to continue
+        while not process_is_alive(pid):
+            print('waiting...')
         operating = [x for x in subjects if x['event'] == event]
 
         # HACK HACK HACK: we only support spinning off once per event now
