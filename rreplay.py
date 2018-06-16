@@ -98,11 +98,12 @@ def execute_rr(rr_dir, subjects):
     for i in subjects:
         events_str += i['rec_pid'] + ':' + i['event'] + ','
 
+    my_env = os.environ.copy()
     logger.debug("-- Executing replay command and writing to proc.out")
     # execute rr with spin-off switch.  Output tossed into proc.out
     command = ['rr', 'replay', '-a', '-n', events_str, rr_dir]
     with open('proc.out', 'w') as f:
-        subprocess.Popen(command, stdout=f, stderr=f)
+        subprocess.Popen(command, stdout=f, stderr=f, env=my_env)
 
 
 def process_messages(subjects):
