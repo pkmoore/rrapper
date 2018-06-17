@@ -172,7 +172,6 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        logger.debug("Killing rrapper\nDumping proc.out")
 
         # read output
         with open('proc.out', 'r') as content_file:
