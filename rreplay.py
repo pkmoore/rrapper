@@ -202,7 +202,7 @@ def check_environment():
     # check to see rr is a valid shell-level command. Error status is nonzero
     status, _ = commands.getstatusoutput('rr help')
     if status != 0:
-        logger.debug("Unable to call rr command. Is it installed or in PATH?")
+        logger.error("Unable to call rr command. Is it installed or in PATH?")
         exit(1)
 
 
