@@ -1,3 +1,0 @@
-[submodule "syscallreplay"]
-	path = syscallreplay
-	url = https://github.com/pkmoore/syscallreplay.git
