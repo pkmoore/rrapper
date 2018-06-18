@@ -10,6 +10,7 @@ import mock
 from inject import exit_with_status
 from inject import apply_mmap_backing_files
 from inject import apply_open_fds
+from inject import consume_configuration
 
 # pylint: disable=no-self-use
 
@@ -94,3 +95,21 @@ class TestApplyOpenFds(unittest.TestCase):
         mock_sr.injected_state = {'open_fds': {'1111': [1]}}
         apply_open_fds('1111')
         self.assertEqual(cmp(mock_sr.injected_state['open_fds'], [1]), 0)
+
+
+class TestConsumeConfiguration(unittest.TestCase):
+    """ Test consuming configuration, applying it, and removing the file.
+    """
+
+    @mock.patch('__builtin__.open')
+    @mock.patch('json.load')
+    @mock.patch('os.remove')
+    def test_consume_configuration(self, mock_remove, mock_load, mock_open):
+        """ Ensure file is opened with read, loaded as json, and removed
+        """
+        config_file = 'config.json'
+        consume_configuration(config_file)
+        mock_open.assert_called_with(config_file, 'r')
+        #  Not testing what load was passed as it will be a mock in this case
+        mock_load.assert_called()
+        mock_remove.assert_called_with(config_file)
