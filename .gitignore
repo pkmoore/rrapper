@@ -2,3 +2,4 @@
 *.projectile
 *.out
 syscall_definitions.pickle
+crashsim/*
