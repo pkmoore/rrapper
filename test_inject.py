@@ -11,6 +11,7 @@ from inject import exit_with_status
 from inject import apply_mmap_backing_files
 from inject import apply_open_fds
 from inject import consume_configuration
+from inject import parse_backing_files
 
 # pylint: disable=no-self-use
 
@@ -113,3 +114,14 @@ class TestConsumeConfiguration(unittest.TestCase):
         #  Not testing what load was passed as it will be a mock in this case
         mock_load.assert_called()
         mock_remove.assert_called_with(config_file)
+
+
+class TestParseBackingFiles(unittest.TestCase):
+    """ Test parsing mmap backing files into an appropriate dictionary
+    """
+
+    def test_parse_valid_backing_files(self):
+        """ Make sure we build a correct dictionary for a given line
+        """
+        files_dict = parse_backing_files('11:/test.txt')
+        self.assertEqual(cmp(files_dict, {'11': '/test.txt'}), 0)
