@@ -14,7 +14,7 @@ from inject import apply_open_fds
 # pylint: disable=no-self-use
 
 
-class ExitWithStatusTestCase(unittest.TestCase):
+class TestExitWithStatusTestCase(unittest.TestCase):
     """Test exit_with_status helper function
     """
 
@@ -53,7 +53,7 @@ class ExitWithStatusTestCase(unittest.TestCase):
         mock_print_exc.assert_called()
 
 
-class ApplyMmapBackingFilesTestCase(unittest.TestCase):
+class TestApplyMmapBackingFilesTestCase(unittest.TestCase):
     """Test apply_mmap_backing_files helper function
     """
 
@@ -82,7 +82,7 @@ class ApplyMmapBackingFilesTestCase(unittest.TestCase):
         mock_parse_backing_files.assert_not_called()
 
 
-class ApplyOpenFds(unittest.TestCase):
+class TestApplyOpenFds(unittest.TestCase):
     """ Test applying open fds to the correct spot in injected_state
     """
 
