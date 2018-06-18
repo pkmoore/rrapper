@@ -61,12 +61,11 @@ class ApplyMmapBackingFilesTestCase(unittest.TestCase):
     @mock.patch('inject.parse_backing_files')
     def test_apply_mmap_backing_line(self,
                                      mock_parse_backing_files,
-                                     mock_syscallreplay):
+                                     mock_sr):
         """ Test applying mmap backing file configuration
         """
 
-        mock_syscallreplay.injected_state = {'config':
-                                             {'mmap_backing_files': '1:/test'}}
+        mock_sr.injected_state = {'config': {'mmap_backing_files': '1:/test'}}
         apply_mmap_backing_files()
         mock_parse_backing_files.assert_called_with('1:/test')
 
