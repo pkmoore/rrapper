@@ -1,6 +1,3 @@
 [submodule "syscallreplay"]
 	path = syscallreplay
 	url = https://github.com/pkmoore/syscallreplay.git
-[submodule "posix-omni-parser"]
-	path = posix-omni-parser
-	url = https://github.com/pkmoore/posix-omni-parser.git
