@@ -7,10 +7,10 @@ from __future__ import print_function
 import os
 import os.path
 import signal
+import sys
 import subprocess
 import ConfigParser
 import json
-import commands
 import logging
 import argparse
 from syscallreplay.util import process_is_alive
@@ -200,10 +200,20 @@ def check_environment():
         os.unlink('rrdump_proc.pipe')
 
     # check to see rr is a valid shell-level command. Error status is nonzero
-    status, _ = commands.getstatusoutput('rr help')
-    if status != 0:
-        logger.error("Unable to call rr command. Is it installed or in PATH?")
-        exit(1)
+    try:
+        with open(os.devnull, 'w') as fnull:
+            subprocess.check_call(['rr', 'help'],
+                                  stdout=fnull,
+                                  stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        logger.error('rr was found but "rr help" exited with an error.')
+        logger.error('Make sure your Python venv has the required rrdump '
+                     'module.')
+        sys.exit(1)
+    except OSError:
+        logger.error('The rr command was not found.  Make sure it is '
+                     ' installed somewhere described by your $PATH')
+        sys.exit(1)
 
 
 if __name__ == '__main__':
@@ -222,4 +232,4 @@ if __name__ == '__main__':
 
         # ensure clean exit by unlinking
         cleanup()
-        exit(0)
+        sys.exit(0)
