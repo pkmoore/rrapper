@@ -215,6 +215,15 @@ def check_environment():
                      ' installed somewhere described by your $PATH')
         sys.exit(1)
 
+    # ensure syscall_definitions.pickle exists.  If it doesn, generate it.
+    if not os.path.exists('syscall_definitions.pickle'):
+        logger.error('We need to re-generate syscall_definitions.pickle')
+        try:
+            subprocess.check_call(['python', 'parse_syscall_definitions.py'])
+        except subprocess.CalledProcessError:
+            logger.error('parse_syscall_definitions.py returned an error')
+            sys.exit(1)
+
 
 if __name__ == '__main__':
     args = parse_arguments()
