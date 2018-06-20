@@ -10,6 +10,8 @@ import traceback
 
 import logging
 
+from posix_omni_parser import Trace
+
 from syscallreplay import syscall_dict
 
 from syscallreplay import generic_handlers
@@ -23,8 +25,8 @@ from syscallreplay import multiplex_handlers
 from syscallreplay import util
 from syscallreplay.util import ReplayDeltaError
 
-sys.path.append('posix-omni-parser/')
-import Trace
+from checker.checker import NullChecker
+from mutator.mutator import NullMutator
 
 logging.basicConfig(stream=sys.stderr, level=4)
 
@@ -311,59 +313,111 @@ def parse_backing_files(bfs):
     bfs = bfs[:-1]
     tmp = {}
     for i in bfs:
-        bf = i.split(':')
-        tmp[bf[0]] = bf[1]
+        bf_pair = i.split(':')
+        tmp[bf_pair[0]] = bf_pair[1]
     return tmp
 
 
-if __name__ == '__main__':
-    with open(sys.argv[1], 'r') as f:
-        syscallreplay.injected_state = json.load(f)
-    os.remove(sys.argv[1])
+def consume_configuration(config):
+    with open(config, 'r') as cfg_file:
+        syscallreplay.injected_state = json.load(cfg_file)
+    os.remove(config)
 
-    # Configure various locals from the config section of our injected state
-    event = syscallreplay.injected_state['config']['event']
-    pid = int(syscallreplay.injected_state['config']['pid'])
-    rec_pid = syscallreplay.injected_state['config']['rec_pid']
-    syscallreplay.injected_state['open_fds'] = syscallreplay.injected_state['open_fds'][rec_pid]
-    trace = Trace.Trace(syscallreplay.injected_state['config']['trace_file'])
-    syscallreplay.syscalls = trace.syscalls
-    syscallreplay.syscall_index = int(syscallreplay.injected_state['config']['trace_start'])
-    syscallreplay.syscall_index_end = int(syscallreplay.injected_state['config']['trace_end'])
+
+def apply_open_fds(rec_pid):
+    fds_for_pid = syscallreplay.injected_state['open_fds'][rec_pid]
+    syscallreplay.injected_state['open_fds'] = fds_for_pid
+
+
+def apply_mmap_backing_files():
     if 'mmap_backing_files' in syscallreplay.injected_state['config']:
-        syscallreplay.injected_state['config']['mmap_backing_files'] = parse_backing_files(syscallreplay.injected_state['config']['mmap_backing_files'])
+        line = syscallreplay.injected_state['config']['mmap_backing_files']
+        files = parse_backing_files(line)
+        syscallreplay.injected_state['config']['mmap_backing_files'] = files
+
+
+def exit_with_status(pid, code):
+    _kill_parent_process(pid)
+    if code != 0:
+        traceback.print_exc()
+        print('Failed to complete trace')
+    else:
+        print('Completed the trace')
+    sys.exit(code)
+
+
+def main(config):
+    # Sets up syscallreplay.injected_state['config']
+    consume_configuration(config)
+    # Configure various locals from the config section of our injected state
+    config_dict = syscallreplay.injected_state['config']
+    pid = int(config_dict['pid'])
+    rec_pid = config_dict['rec_pid']
+    apply_open_fds(rec_pid)
+    apply_mmap_backing_files()
+    trace = Trace.Trace(config_dict['trace_file'])
+    syscallreplay.syscalls = trace.syscalls
+    syscallreplay.syscall_index = int(config_dict['trace_start'])
+    syscallreplay.syscall_index_end = int(config_dict['trace_end'])
+
+    # Set up checker and mutator
+    checker = None
+    mutator = None
+    if 'checker' in syscallreplay.injected_state['config']:
+        checker = eval(syscallreplay.injected_state['config']['checker'])
+    if 'mutator' in syscallreplay.injected_state['config']:
+        mutator = eval(syscallreplay.injected_state['config']['mutator'])
+        mutator.mutate_trace(trace)
 
     # Requires kernel.yama.ptrace_scope = 0
     # in /etc/sysctl.d/10-ptrace.conf
     # on modern Ubuntu
     logging.debug('Injecting %d', pid)
     syscallreplay.attach(pid)
+    _, status = os.waitpid(pid, 0)
+    logging.debug('Attached %d', pid)
+
+    logging.debug('Requesting stop at next system call entry using SIGCONT')
     syscallreplay.syscall(pid, signal.SIGCONT)
+    _, status = os.waitpid(pid, 0)
+
     # We need an additional call to PTRACE_SYSCALL here in order to skip
     # past an rr syscall buffering related injected system call
-    syscallreplay.syscall(pid, signal.SIGCONT)
-    logging.debug('Continuing %d', pid)
-    syscallreplay.entering_syscall = True
+    logging.debug('Second sigcont %d', pid)
+    syscallreplay.syscall(pid, 0)
     _, status = os.waitpid(pid, 0)
+
+    logging.debug('Entering system call handling loop')
+
+    syscallreplay.entering_syscall = True
     while not os.WIFEXITED(status):
         syscall_object = syscallreplay.syscalls[syscallreplay.syscall_index]
         try:
+            syscall_id = syscallreplay.peek_register(pid,
+                                                     syscallreplay.ORIG_EAX)
             debug_handle_syscall(pid,
-                                 syscallreplay.peek_register(pid,
-                                                             syscallreplay.ORIG_EAX),
+                                 syscall_id,
                                  syscall_object,
                                  syscallreplay.entering_syscall)
         except:
-            traceback.print_exc()
-            print('Failed to complete trace')
-            _kill_parent_process(pid)
-            sys.exit(1)
+            exit_with_status(pid, 1)
+        if checker:
+            checker.transition(syscall_object)
         if not syscallreplay.entering_syscall:
             syscallreplay.syscall_index += 1
         syscallreplay.entering_syscall = not syscallreplay.entering_syscall
         syscallreplay.syscall(pid, 0)
         _, status = os.waitpid(pid, 0)
         if syscallreplay.syscall_index == syscallreplay.syscall_index_end:
-            print('Completed the trace')
-            _kill_parent_process(pid)
-            sys.exit(0)
+            if checker:
+                print('####    Checker Status    ####')
+                if checker.is_accepting():
+                    print('{} accepted'.format(checker))
+                else:
+                    print('{} not accepted'.format(checker))
+                print('####  End Checker Status  ####')
+            exit_with_status(pid, 0)
+
+
+if __name__ == '__main__':
+    main(sys.argv[1])

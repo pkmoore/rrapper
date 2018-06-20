@@ -30,18 +30,23 @@ echo 0 | sudo tee /proc/sys/kernel/randomize\_va\_space
 
 After cloning this repository a few dependencies must be put in place:
 
-First, [posix-omni-parser](http://github.com/pkmoore/posix-omni-parser)
-*  This library requires a syscall\_definitions.pickle file be generated using
-   the provided script and placed in the base directory (the one with rreplay.py
-   etc.)
+Install virtualenv
 
-Second, [syscallreplay](http://github.com/pkmoore/syscallreplay)
-* This lbrary must be cloned into the base directory and the C extension it
-  contains must be compiled.
-* In the syscallreplay directory run python setup.py build\_ext --inplace
-* Alternatively, the syscallreplay extension can be complied and installed
-  alongside its dependencies somewhere in python's module path
+```
+pip install virtualenv
+```
 
+Create a virtualenv for use with CrashSimulator
+
+```
+python -m virtualenv ./crashsim
+```
+
+Install CrahSimulator's dependencies
+
+```
+pip install -r requirements.txt
+```
 
 # Usage
 
@@ -54,7 +59,7 @@ to disable this functionality when recording so all system calls are present and
 can be interacted with.  This is easily accomplished using the **-n** command
 line switch.
 
-*Configuration* 
+*Configuration*
 
 Various aspects replay and injection behavior must be configured in a
 configuration file.  The comments in the below code snippet describe required
@@ -113,3 +118,75 @@ in huge traces so you should chop out any lines that are not relevant to your
 replay efforts.  Because the injector's handling of a process can be rough in
 places, you should ask it to handle as small of a segment as is required to
 exercise your test case.
+
+
+# Checkers and Mutators
+
+## Checkers
+
+CrashSimulator supports user supplied checkers implemented in Python.  These
+checkers consist of Python classes that support a specific set of methods as
+described below.  Checkers receive the sequence of system calls as they are
+handled by CrashSimulator.  The checker is reponsible for examining these system
+calls and making a decision as to whether the application took a specific action
+or not.  Built in checkers use a form of state machine to make this decision but
+users are free to track state using whatever model they prefer.
+
+### Required Methods
+
+```
+init(self, <additional parameters>
+```
+
+The checker class's init method can be used to configure things like file names,
+file descriptors, or parameter values to watch for.  The values for these
+parameters are passed in when the checker is configured in a .ini file.
+
+
+```
+transition(self, syscall_object)
+```
+
+This method is called for every system call entrance and exit handled by
+CrashSimulator.  The supplied syscall_object is a posix-omni-parser--like object
+meaning tthings like parameters and return values can be examined.
+
+
+```
+is_accepting(self)
+```
+
+This method must return a truth-y for false-y value that is used to
+CrashSimulator to report whether or not the checker accepted the handled system
+call sequence.
+
+## Mutators
+
+Mutators are also implemented as a python class that implements a specific set
+of methods.  The mutator operates on the text content of the configured strace
+segment.
+
+
+```
+init(self, <additional parameters>
+```
+
+The mutator's init method is used to supply values needed during the mutating
+process.  Values for the additional parameters are supplied through
+configuration in a .ini file.
+
+
+```
+mutate_trace(self, trace)
+```
+
+__Note:  The below behavior is expected to change.  More of the boilerplate will
+be handled by CrashSimulator__
+
+This call is made prior to the CrashSimulator kicking off the system call
+handling process.  trace the filename of the strace segment that will be used
+during system call handling.  During this method call the mutator is expected to
+open, mutate, and write the mutated trace out to a file.  This method must
+return the filename of the mutated trace.  CrashSimulator will use this filename
+to drive testing rather than the unmodified file.
+

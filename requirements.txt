@@ -1,0 +1,9 @@
+./rrdump
+
+git+https://github.com/pkmoore/posix-omni-parser
+git+https://github.com/pkmoore/syscallreplay
+
+mock
+nose
+
+
