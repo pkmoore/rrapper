@@ -5,13 +5,16 @@
 
 import unittest
 import mock
+from bunch import Bunch
 
+from syscallreplay.util import ReplayDeltaError
 
 from inject import exit_with_status
 from inject import apply_mmap_backing_files
 from inject import apply_open_fds
 from inject import consume_configuration
 from inject import parse_backing_files
+from inject import debug_handle_syscall
 
 # pylint: disable=no-self-use
 
@@ -125,3 +128,39 @@ class TestParseBackingFiles(unittest.TestCase):
         """
         files_dict = parse_backing_files('11:/test.txt')
         self.assertEqual(cmp(files_dict, {'11': '/test.txt'}), 0)
+
+
+class TestDebugHandleSyscall(unittest.TestCase):
+    """ Test debug_handle_syscall
+    """
+
+    @mock.patch('inject.handle_syscall')
+    def test_handle_no_exception(self, mock_handle):
+        """ Ensure we call handle_syscall with the appropriate args and don't
+        blow up if we don't have an exception.
+        """
+        pid = 555
+        syscall_id = 102
+        entering = True
+        syscall_object = Bunch()
+        debug_handle_syscall(pid, syscall_id, syscall_object, entering)
+        mock_handle.assert_called_with(pid,
+                                       syscall_id,
+                                       syscall_object,
+                                       entering)
+
+    @mock.patch('inject.handle_syscall')
+    @mock.patch('syscallreplay.file_handlers.open_entry_debug_printer')
+    def test_handle_replay_delta_error(self, mock_printer, mock_handle):
+        pid = 555
+        syscall_id = 5
+        entering = True
+        syscall_object = Bunch()
+        mock_handle.side_effect = ReplayDeltaError('A test error')
+        self.assertRaises(ReplayDeltaError,
+                          debug_handle_syscall,
+                          pid,
+                          syscall_id,
+                          syscall_object,
+                          entering)
+        mock_printer.assert_called_with(pid, syscall_id, syscall_object)
