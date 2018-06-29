@@ -12,8 +12,6 @@ from inject import apply_mmap_backing_files
 from inject import apply_open_fds
 from inject import consume_configuration
 from inject import parse_backing_files
-from inject import handle_syscall
-from inject import handle_socketcall
 
 # pylint: disable=no-self-use
 
@@ -127,23 +125,3 @@ class TestParseBackingFiles(unittest.TestCase):
         """
         files_dict = parse_backing_files('11:/test.txt')
         self.assertEqual(cmp(files_dict, {'11': '/test.txt'}), 0)
-
-
-class TestHandleSyscall(unittest.TestCase):
-    """ Test handling system call by checking for validation, and handling forward
-    """
-
-    def test_handle_socket_syscall(self):
-        """ Uses handle_syscall to test socket calls
-        """
-
-        result = handle_syscall(1111, 102, "", "")
-        self.assertEqual(result, handle_socketcall(102, "", "", 1111))
-
-
-    def test_handle_socketcall(self):
-        """ Test actual socketcall and how corresponding handler works
-        """
-        
-        return 0
-
