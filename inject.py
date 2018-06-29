@@ -7,8 +7,9 @@ import os
 import signal
 import json
 import traceback
-
 import logging
+
+import syscallreplay
 
 from posix_omni_parser import Trace
 
