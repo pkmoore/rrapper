@@ -12,8 +12,6 @@ from inject import apply_mmap_backing_files
 from inject import apply_open_fds
 from inject import consume_configuration
 from inject import parse_backing_files
-from inject import handle_syscall
-from inject import handle_socketcall
 
 # pylint: disable=no-self-use
 
