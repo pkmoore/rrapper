@@ -231,6 +231,7 @@ if __name__ == '__main__':
     check_environment()
 
     try:
+        print(args.path)
         main(args.path)
     except KeyboardInterrupt:
 
