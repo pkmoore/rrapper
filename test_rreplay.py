@@ -10,6 +10,7 @@ import mock
 from rreplay import get_configuration
 from rreplay import execute_rr
 from rreplay import process_messages
+from rreplay import wait_on_handles
 
 # pylint: disable=no-self-use
 
@@ -51,22 +52,35 @@ class TestExecuteRR(unittest.TestCase):
         mock_open.assert_called_with('proc.out', 'w')
         mock_popen.assert_called()
 
-#pylint: disable=too-many-arguments, line-too-long
-class TestProcessMessages(unittest.TestCase):
-    """ Test processing messages from pipe
+
+class TestWaitOnHandles(unittest.TestCase):
+    """ Test wait_on_handles helper function
     """
-
-    @mock.patch('rreplay.get_message')
-    @mock.patch('syscallreplay.util.process_is_alive')
-    @mock.patch('__builtin__.open')
-    @mock.patch('json.load')
-    @mock.patch('json.dump')
+    
     @mock.patch('subprocess.Popen')
-    def test_process_messages(self, mock_popen, mock_dump, mock_load, mock_open, mock_process_is_alive, mock_get_message):
-        """ Test to see if process_messages receives messages and passes to inject.py
+    @mock.patch('subprocess.Popen.wait')
+    @mock.patch('os.kill')
+    @mock.patch('signal.SIGKILL')
+    def test_injector_success(self, mock_sigkill, mock_kill, mock_wait, mock_popen):
+        """ Test handle wait for subjects successfully
         """
-        subjects = []
+        s_handle = mock_popen(['python', 'test.py'])
+        subjects = [{'handle': s_handle, 'rec_pid': '123', 'event': '123', 'other_procs': [111, 112, 113, 114]}]
 
-        process_messages(subjects)
-        mock_get_message.assert_called_with('rrdump_proc.pipe')
-#pylint: enable=too-many-arguments,line-too-long
+        wait_on_handles(subjects)
+        mock_wait.assert_called_with(subjects[0]['handle'])
+        # test os.kill mock on last PID
+        mock_kill.assert_called_with(114, mock_sigkill)
+
+    @mock.patch('os.kill')
+    @mock.patch('signal.SIGKILL')
+    def test_injector_fail(self, mock_sigkill, mock_kill):
+        """ Test failed injector on because of no handles
+        """
+        subjects = [{'rec_pid': '123', 'event': '123', 'other_procs': [111, 112, 113, 114]}]
+        
+        wait_on_handles(subjects)
+        # test os.kill mock on last PID
+        mock_kill.assert_called_with(114, mock_sigkill)
+
+
