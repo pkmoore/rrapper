@@ -9,7 +9,6 @@ import mock
 
 from rreplay import get_configuration
 from rreplay import execute_rr
-from rreplay import process_messages
 from rreplay import wait_on_handles
 
 # pylint: disable=no-self-use
@@ -52,11 +51,11 @@ class TestExecuteRR(unittest.TestCase):
         mock_open.assert_called_with('proc.out', 'w')
         mock_popen.assert_called()
 
-
+#pylint disable=line-too-long
 class TestWaitOnHandles(unittest.TestCase):
     """ Test wait_on_handles helper function
     """
-    
+
     @mock.patch('subprocess.Popen')
     @mock.patch('subprocess.Popen.wait')
     @mock.patch('os.kill')
@@ -78,9 +77,8 @@ class TestWaitOnHandles(unittest.TestCase):
         """ Test failed injector on because of no handles
         """
         subjects = [{'rec_pid': '123', 'event': '123', 'other_procs': [111, 112, 113, 114]}]
-        
+
         wait_on_handles(subjects)
         # test os.kill mock on last PID
         mock_kill.assert_called_with(114, mock_sigkill)
-
-
+#pylint enable=line-too-long
