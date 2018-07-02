@@ -7,14 +7,14 @@ import os
 import signal
 import json
 import traceback
-
 import logging
+
+import syscallreplay
 
 from posix_omni_parser import Trace
 
 from syscallreplay import syscall_dict
 
-from syscallreplay import syscallreplay
 from syscallreplay import generic_handlers
 from syscallreplay import file_handlers
 from syscallreplay import kernel_handlers

@@ -1,8 +1,0 @@
-2170  read(0, "hello\n", 8)             = 6
-2170  fstat64(1, {st_dev=makedev(0, 21), st_ino=8, st_mode=S_IFCHR|0620, st_nlink=1, st_uid=1000, st_gid=5, st_blksize=1024, st_blocks=0, st_rdev=makedev(136, 5), st_atime=2018/02/27-11:14:24.857013341, st_mtime=2018/02/27-11:14:24.857013341, st_ctime=2018/02/27-11:03:21.857013341}) = 0
-2170  brk(NULL)                         = 0x8b34000
-2170  brk(0x8b55000)                    = 0x8b55000
-2170  write(1, "hello\n", 6)            = 6
-2170  write(1, "7\n", 2)                = 2
-2170  exit_group(0)                     = ?
-2170  +++ exited with 0 +++

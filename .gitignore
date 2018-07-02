@@ -1,3 +1,7 @@
+build/
+*.strace
+*.pipe
+*.json
 *.pyc
 *.projectile
 *.out

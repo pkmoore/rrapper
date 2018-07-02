@@ -1,5 +1,0 @@
-31869 write(1, "hello\n", 6)            = 6
-31869 write(1, "test again\n", 11)      = 11
-31869 write(1, "failed", 6)             = 6
-31869 exit_group(0)                     = ?
-31869 +++ exited with 0 +++
