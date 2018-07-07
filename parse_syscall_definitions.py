@@ -62,7 +62,7 @@ def parse_syscall_names_list():
     ls_man_output = ls_man_process.communicate()[0]
 
     # split output into list of lines for each system call
-    man_lines = ls_man_output.decode("utf-8").split("\n")
+    man_lines = ls_man_output.split("\n")
 
     syscall_names_list = []
 
@@ -71,6 +71,10 @@ def parse_syscall_names_list():
     for line in man_lines:
         syscallname = line.split(' ', 1)[0].strip()
         syscall_names_list.append(syscallname)
+
+    # check if last element is empty
+    if syscall_names_list[-1] == '':
+        syscall_names_list.pop()
 
     return syscall_names_list
 
@@ -98,7 +102,10 @@ def get_syscall_definitions_list(syscall_names_list):
     """
     syscall_definitions_list = []
     for syscall_name in syscall_names_list:
-        syscall_definitions_list.append(SyscallManual(syscall_name))
+        try:
+            syscall_definitions_list.append(SyscallManual(syscall_name))
+        except Exception:
+            pass
 
     return syscall_definitions_list
 
