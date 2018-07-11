@@ -8,9 +8,8 @@
 <Purpose>
   Parse the definitions of all system calls from their man pages.
 
-  First read the manual page for syscalls (man 2 syscalls) and parse the names
-  of all system calls available in the system. Then for each system call read
-  its man page and get its definition.
+  First retrieve system calls names using a one-line comand through subprocess.
+  Then for each system call read its man page and get its definition.
 
 
   Manual pages (man) are read using the subprocess library.
@@ -32,7 +31,7 @@ import re
 import signal
 import subprocess
 
-from sysDef.SyscallManual import SyscallManual
+from sysDef.SyscallManual import SyscallManual, SyscallManualException
 
 
 def parse_syscall_names_list():
@@ -101,11 +100,15 @@ def get_syscall_definitions_list(syscall_names_list):
 
     """
     syscall_definitions_list = []
+
+    # when a SyscallManual definition returns an exception, the system call is a special case,
+    # as it not unimplemented nor unavailable. It is therefore skipped and not listed.
     for syscall_name in syscall_names_list:
         try:
             syscall_definitions_list.append(SyscallManual(syscall_name))
-        except Exception:
-            pass
+        except SyscallManualException as e:
+            print str(e) + " Skipping system call."
+            continue
 
     return syscall_definitions_list
 
