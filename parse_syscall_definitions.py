@@ -8,9 +8,8 @@
 <Purpose>
   Parse the definitions of all system calls from their man pages.
 
-  First read the manual page for syscalls (man 2 syscalls) and parse the names
-  of all system calls available in the system. Then for each system call read
-  its man page and get its definition.
+  First retrieve system calls names using a one-line comand through subprocess.
+  Then for each system call read its man page and get its definition.
 
 
   Manual pages (man) are read using the subprocess library.
@@ -32,113 +31,49 @@ import re
 import signal
 import subprocess
 
-from sysDef.SyscallManual import SyscallManual
+from sysDef.SyscallManual import SyscallManual, SyscallManualException
 
 
 def parse_syscall_names_list():
     """
     <Purpose>
-      Reads the man entry for 'syscalls' and parses all the names of the system 
-      calls in the system.
-    
+      Uses a command to retrieve output of all system call names in the system
+
     <Arguments>
       None
-    
+
     <Exceptions>
       None
-    
+
     <Side Effects>
       None
-    
+
     <Returns>
-      syscall_names_list: 
-        A list of all the system call names gathered from the man page of the 
-        syscalls man entry.
+      syscall_names_list:
+        A list of all the system call names gathered from syscall retrieval command
     """
 
+    # create command for retrieving section 2 system calls efficiently
+    ls_man_command = "ls /usr/share/man/man2 | sed -e s/.2.gz//g | xargs man -s 2 -k  | sort"
 
+    # command is passed as string, in order for pipe to carry out
+    ls_man_process = subprocess.Popen(ls_man_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    ls_man_output = ls_man_process.communicate()[0]
 
-    # read the man page for 'syscalls' into a byte string.
-    #
-    # https://blog.nelhage.com/2010/02/a-very-subtle-bug/
-    # read link for supporting this operation on python v2. python v3 fixes this so the second
-    # argument of check_output is not needed.
-    man_page_bytestring = subprocess.check_output(['man', 'syscalls'], preexec_fn=lambda:
-                      signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+    # split output into list of lines for each system call
+    man_lines = ls_man_output.split("\n")
 
-    # cast to string and split into a list of lines.
-    man_page_lines = man_page_bytestring.decode("utf-8").split("\n")
-
-    # a regular expression used to sanitize the read lines. Specifically removes
-    # the backspace characters and the character they hide to allow searching for
-    # substrings.
-    char_backspace = re.compile(".\b")
-
-    # remove all lines until the line with the first system call which includes
-    # the text "_llseek(2)" on a GNU/Linux 3.5.0-36-generic
-    while True:
-        if len(man_page_lines) == 0:
-            raise Exception("_llseek not found in syscalls man page.")
-
-        line = man_page_lines[0]
-
-        # line could include backspaces \b which prevents from searching the line
-        # correctly. Remove backspaces.
-        # eg: # __llllsseeeekk(2)                  1.2
-        line = char_backspace.sub("", line)
-
-        if "_llseek(2)" in line:
-            break
-
-        # if this is not the line we are looking for then remove the line and
-        # continue.
-        man_page_lines.pop(0)
-
-    # At this point the first item in man_page_lines should contain the name of
-    # the first system call. Get the names of all system calls up to the last one
-    # which should be the "writev" system call.
     syscall_names_list = []
 
-    # loop until the last entry of the list of syscall names is writev.
-    while True:
-        if len(man_page_lines) == 0:
-            raise Exception("Reached the end of syscalls man page while trying to " +
-                          "read the syscall names.")
+    # remove description from each line, retrieve only the system call name, and
+    # append to list
+    for line in man_lines:
+        syscallname = line.split(' ', 1)[0].strip()
+        syscall_names_list.append(syscallname)
 
-        line = man_page_lines.pop(0).strip()
-
-        # sanitize line (remove backspaces)
-        line = char_backspace.sub("", line)
-
-        # skip empty lines.
-        if(line == ''):
-            continue
-
-        # we only need the name of the system call which should be the first part of
-        # the line.
-        #
-        # Example lines in syscalls man entry:
-        # afs_syscall(2)                            Not implemented
-        # alarm(2)
-        # alloc_hugepages(2)          2.5.36        Removed in 2.5.44
-        # perf_event_open(2)          2.6.31        Was called perf_counter_open()
-        #                                           in 2.6.31; renamed in 2.6.32
-        syscall_name = line.split(None, 1)[0].strip()
-
-        # all syscall names are followed by the "(2)" text. if not then they must be
-        # something else we don't need, so let's skip it.
-        if(not syscall_name.endswith("(2)")):
-            continue
-
-        # remove the "(2)" part and add it to the list.
-        syscall_name = syscall_name[:syscall_name.find("(2)")]
-        syscall_names_list.append(syscall_name)
-
-
-        # once we add the writev syscall we break since there are no more syscalls
-        # after this.
-        if(syscall_name == "writev"):
-            break
+    # check if last element is empty
+    if syscall_names_list[-1] == '':
+        syscall_names_list.pop()
 
     return syscall_names_list
 
@@ -147,26 +82,33 @@ def parse_syscall_names_list():
 def get_syscall_definitions_list(syscall_names_list):
     """
     <Purpose>
-      Given a list of syscall names, it returns a list of SyscallManual  objects.
-    
+      Given a list of syscall names, it returns a list of SyscallManual objects.
+
     <Arguments>
       syscall_names_list:
         a list of system call names.
-    
+
     <Exceptions>
       None
-    
+
     <Side Effects>
       None
-    
+
     <Returns>
       syscall_definitions_list:
         A list of SyscallManual objects.
-    
+
     """
     syscall_definitions_list = []
+
+    # when a SyscallManual definition returns an exception, the system call is a special case,
+    # as it not unimplemented nor unavailable. It is therefore skipped and not listed.
     for syscall_name in syscall_names_list:
-        syscall_definitions_list.append(SyscallManual(syscall_name))
+        try:
+            syscall_definitions_list.append(SyscallManual(syscall_name))
+        except SyscallManualException as e:
+            print str(e) + " Skipping system call."
+            continue
 
     return syscall_definitions_list
 
@@ -174,8 +116,8 @@ def get_syscall_definitions_list(syscall_names_list):
 
 def print_definitions1(syscall_definitions_list):
     """
-    A view of the parsed definitions. Prints the number of system call names 
-    parsed, the list of all the system call names and a list of all the 
+    A view of the parsed definitions. Prints the number of system call names
+    parsed, the list of all the system call names and a list of all the
     definitions.
     """
 
@@ -207,7 +149,7 @@ def print_definitions1(syscall_definitions_list):
 
 def print_definitions2(syscall_definitions_list):
     """
-    A view of the parsed definitions. Prints only the list of parsed definitions. 
+    A view of the parsed definitions. Prints only the list of parsed definitions.
     Skips the system calls for which a definition was not found (for any reason).
     """
 
@@ -224,7 +166,7 @@ def print_definitions2(syscall_definitions_list):
 
 def print_definitions3(syscall_definitions_list):
     """
-    A view of the parsed definitions. 
+    A view of the parsed definitions.
     - Lists the syscall names for which a definition was NOT found.
     - Prints the reason the definition was not found.
     - Lists the type of all syscalls i.e:
