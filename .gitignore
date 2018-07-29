@@ -1,5 +1,12 @@
 *.pyc
 *.projectile
 *.out
+*.so
+*.swp
 syscall_definitions.pickle
+strace_out.strace
+
 crashsim/*
+build/*
+dist/*
+*.egg-info/*
