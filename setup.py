@@ -8,6 +8,7 @@ REPO = "https://github.com/pkmoore/rrapper"
 DESC = """rrapper is a software suite under CrashSimulator that provides utilities for interacting with
 a modified rr branch for record-replay debugging."""
 
+# add Python C API extension for linking cpuid library
 CPUID_EXTENSION = Extension('cpuid', ['src/cpuid.c'],
                              extra_compile_args=["-Wall"])
 
@@ -39,6 +40,10 @@ setup(
         'nose',
         'bunch',
         'tabulate',
+    ],
+    dependency_links=[
+        'git+ssh://git@github.com/pkmoore/syscallreplay/tarball/master#egg=syscallreplay-1.0.0',
+        'git+ssh://git@github.com/pkmoore/posix-omni-parser/tarball/master#egg=posix-omni-parser=1.0.0'
     ],
     ext_modules=[
         CPUID_EXTENSION
