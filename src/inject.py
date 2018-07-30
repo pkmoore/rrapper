@@ -347,7 +347,7 @@ def exit_with_status(pid, code):
     sys.exit(code)
 
 
-def main(config):
+def injector(config):
     # Sets up syscallreplay.injected_state['config']
     consume_configuration(config)
     # Configure various locals from the config section of our injected state
@@ -419,6 +419,3 @@ def main(config):
                 print('####  End Checker Status  ####')
             exit_with_status(pid, 0)
 
-
-if __name__ == '__main__':
-    main(sys.argv[1])
