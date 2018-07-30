@@ -4,6 +4,7 @@
 
 <Author>
   Savvas Savvides <savvas@purdue.edu>
+  Alan Cao <ac7758@nyu.edu>
 
 <Purpose>
   Parse the definitions of all system calls from their man pages.
@@ -30,6 +31,7 @@
 import re
 import signal
 import subprocess
+import pickle
 
 from sysDef.SyscallManual import SyscallManual, SyscallManualException
 
@@ -114,57 +116,9 @@ def get_syscall_definitions_list(syscall_names_list):
 
 
 
-def print_definitions1(syscall_definitions_list):
-    """
-    A view of the parsed definitions. Prints the number of system call names
-    parsed, the list of all the system call names and a list of all the
-    definitions.
-    """
-
-    print "A total of", len(syscall_definitions_list), "system call names were parsed."
-    print
-    print
-
-    print"List of system call names:"
-    print"--------------------------"
-
-    for sd in syscall_definitions_list:
-        print sd.name
-
-    print
-    print
-
-    print "List of system call definitions:"
-    print "--------------------------------"
 
 
-    for sd in syscall_definitions_list:
-        print sd
-        print
-
-    print
-    print
-
-
-
-def print_definitions2(syscall_definitions_list):
-    """
-    A view of the parsed definitions. Prints only the list of parsed definitions.
-    Skips the system calls for which a definition was not found (for any reason).
-    """
-
-    print "List of all syscall definitions found"
-    print "====================================="
-    for sd in syscall_definitions_list:
-        if(sd.type == SyscallManual.FOUND):
-            print sd.definition
-
-    print
-    print
-
-
-
-def print_definitions3(syscall_definitions_list):
+def print_definitions(syscall_definitions_list):
     """
     A view of the parsed definitions.
     - Lists the syscall names for which a definition was NOT found.
@@ -241,13 +195,10 @@ def print_definitions3(syscall_definitions_list):
 
 
 
-def pickle_syscall_definitions(syscall_definitions_list):
-    """
-    Store the syscall_definitions_list into a pickle file.
-    """
 
-    import pickle
-    pickle_name = "syscall_definitions.pickle"
+
+def pickle_syscall_definitions(syscall_definitions_list, target_dir):
+    pickle_name = target_dir + "syscall_definitions.pickle"
     pickle_file = open(pickle_name, 'wb')
     pickle.dump(syscall_definitions_list, pickle_file)
     pickle_file.close()
@@ -255,22 +206,20 @@ def pickle_syscall_definitions(syscall_definitions_list):
 
 
 
-def main():
 
+def generate_pickle(target_dir='./'):
+    
     # get a list with all the system call names available in this system.
     syscall_names_list = parse_syscall_names_list()
+    
+    # output definitions
+    print_definitions()
 
     # use the list of names just parsed to generate a list of system call
     # definitions.
     syscall_definitions_list = get_syscall_definitions_list(syscall_names_list)
 
-    # different views:
-    print_definitions1(syscall_definitions_list)
-    print_definitions2(syscall_definitions_list)
-    print_definitions3(syscall_definitions_list)
-
+    # Alan - for CrashSimulator purposes, we will keep this quiet
     # pickle syscall_definitions_list
-    pickle_syscall_definitions(syscall_definitions_list)
+    pickle_syscall_definitions(syscall_definitions_list, target_dir)
 
-if __name__ == "__main__":
-    main()
