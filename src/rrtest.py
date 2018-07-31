@@ -1,5 +1,8 @@
 #!/usr/bin/env python2.7
 """
+<Program Name>
+  rrtest
+
 <Started>
   July 2018
 
@@ -75,19 +78,8 @@ def rr_copy(src, dest):
 
 
 
-
-def parse_arguments():
-    """
-    <Purpose>
-      Utilizes argparse for argument parsing. We implement two
-      groups for the create and configure command and instantiate
-      their arguments.
-
-    <Returns>
-      argparse Namespace
-
-    """
-    
+def main():
+     
     # initialize parser
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
@@ -127,16 +119,8 @@ def parse_arguments():
                         const=logging.DEBUG,
                         help='flag for displaying debug information')
     
-    return parser.parse_args()
-
-
-
-
-
-def main():
-    
     # parse arguments
-    args = parse_arguments()
+    args = parser.parse_args()
 
     # configure logger
     logging.basicConfig(level=args.verbosity)

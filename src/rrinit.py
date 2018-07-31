@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 """
 <Program Name>
-  rrinit.py
+  rrinit
 
 <Started>
   July 2018
@@ -45,7 +45,7 @@ def main():
                         action='store_true',
                         help='(re)generate syscall_definitions.pickle file')
     parser.add_argument('-v', '--verbosity',
-                        dest='verbosity',
+                        dest='loglevel',
                         action='store_const',
                         const=logging.DEBUG,
                         help='flag for displaying debug information')
@@ -111,7 +111,7 @@ def main():
     # generate pickle
     if not os.path.exists(consts.DEFAULT_CONFIG_PATH + "syscall_definitions.pickle"):
         print "syscall_definitions.pickle does NOT exist. Regenerating."
-        parse_syscall_definitions.generate_pickle(consts.DEFAULT_CONFIG_PATH)         
+        parse_syscall_definitions.generate_pickle()         
     
     print "\n=========================================================="
     print "Sucessfully initialized CrashSimulator environment!"

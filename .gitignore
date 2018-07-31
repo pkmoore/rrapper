@@ -3,6 +3,7 @@
 *.out
 *.so
 *.swp
+*.pipe
 syscall_definitions.pickle
 strace_out.strace
 

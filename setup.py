@@ -31,6 +31,7 @@ setup(
     entry_points = {
         'console_scripts': [
             'rrinit=src.rrinit:main',
+            'rrtest=src.rrtest:main',
             'rreplay=src.rreplay:main'
         ],
     },

@@ -1,4 +1,7 @@
 """
+<Program Name>
+  parse_syscall_definitions
+
 <Started>
   June 2013
 
@@ -213,7 +216,7 @@ def generate_pickle(target_dir='./'):
     syscall_names_list = parse_syscall_names_list()
     
     # output definitions
-    print_definitions()
+    #print_definitions(syscall_names_list)
 
     # use the list of names just parsed to generate a list of system call
     # definitions.
