@@ -32,7 +32,8 @@ setup(
         'console_scripts': [
             'rrinit=src.rrinit:main',
             'rrtest=src.rrtest:main',
-            'rreplay=src.rreplay:main'
+            'rreplay=src.rreplay:main',
+            'inject=src.inject:main'
         ],
     },
     install_requires=[

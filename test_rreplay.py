@@ -19,15 +19,22 @@ class TestGetConfiguration(unittest.TestCase):
     """
 
     @mock.patch('ConfigParser.SafeConfigParser.read')
-    @mock.patch('rreplay.logger')
+    @mock.patch('rreplay.logging')
     def test_get_configuration(self, mock_logger, mock_config_read):
         """ Ensure that the configuration file is opened and parsed
         """
 
         config_file = "test/flask_request.ini"
-        get_configuration(config_file)
+        try:
+            get_configuration(config_file)
+        except IOError:
+            pass
+        
         mock_logger.debug.assert_called()
-        mock_config_read.assert_called()
+        mock_config_read.assert_called_with(config_file)
+
+
+
 
 
 class TestExecuteRR(unittest.TestCase):
@@ -35,7 +42,7 @@ class TestExecuteRR(unittest.TestCase):
     """
 
     @mock.patch('os.environ.copy')
-    @mock.patch('rreplay.logger')
+    @mock.patch('rreplay.logging')
     @mock.patch('__builtin__.open')
     @mock.patch('subprocess.Popen')
     def test_execute_rr(self, mock_popen, mock_open, mock_logger, mock_environ_copy):
@@ -50,6 +57,10 @@ class TestExecuteRR(unittest.TestCase):
         # check if proc.out is opened for writing output
         mock_open.assert_called_with('proc.out', 'w')
         mock_popen.assert_called()
+
+
+
+
 
 #pylint disable=line-too-long
 class TestWaitOnHandles(unittest.TestCase):
@@ -70,6 +81,7 @@ class TestWaitOnHandles(unittest.TestCase):
         mock_wait.assert_called_with(subjects[0]['handle'])
         # test os.kill mock on last PID
         mock_kill.assert_called_with(114, mock_sigkill)
+
 
     @mock.patch('os.kill')
     @mock.patch('signal.SIGKILL')

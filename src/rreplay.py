@@ -32,7 +32,6 @@ import logging
 import argparse
 
 import consts
-import inject as injector
 import syscallreplay.util as util
 
 
@@ -152,7 +151,8 @@ def process_messages(subjects):
             with open(s['injected_state_file'], 'w') as d:
                 json.dump(tmp, d)
 
-            s['handle'] = injector.injector(s['injected_state_file'])
+            s['handle'] = subprocess.Popen(['inject',
+                                            s['injected_state_file']])
             subjects_injected += 1
         elif inject == 'DONT_INJECT':
             s['other_procs'].append(pid)
@@ -202,6 +202,10 @@ def main():
     # add simple logging for verbosity
     logging.basicConfig(level=args.loglevel)
     
+    # ensure that a pre-existing pipe is unlinked before execution
+    if os.path.exists('rrdump_proc.pipe'):
+        os.unlink('rrdump_proc.pipe')
+
     # check if user-specified test exists
     test_dir = consts.DEFAULT_CONFIG_PATH + args.testname
     if not os.path.exists(test_dir):
