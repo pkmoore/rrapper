@@ -227,7 +227,7 @@ def main():
         
         # retrieve system call name
         line = trace_lines[args.trace_line - 1]
-        name = line.split(' ')[1]
+        name = line.split('  ')[1]
         name = name[:name.find('(')]
 
         rr_lines = [x for x in rr_lines if re.search(r'.*ENTERING_SYSCALL', x)]
@@ -255,8 +255,11 @@ def main():
         with open(test_dir + "trace_snip.strace", 'wb') as snip_file:
             # write a 5 line snippet file by default
             for i in range(args.sniplen):
-                snip_file.write(trace_lines[args.trace_line - 1 + i])
-        
+                try:
+                    snip_file.write(trace_lines[args.trace_line - 1 + i])
+                except IndexError:
+                    break
+
         # update changes in config.ini
         config.set("request_handling_process", "trace_file", test_dir + "trace_snip.strace")
         config.set("request_handling_process", "event", user_event)
