@@ -1,30 +1,50 @@
-# Overview
+# rrapper
 
--This repository contains the scripts that work alongside the modified version of rr located [here](https://github.com/pkmoore/rr).
+## Overview
+
+This repository contains the scripts that work alongside the modified version of rr located [here](https://github.com/pkmoore/rr).
+
+### Applications
+
+1. `rrinit`
+
+`rrinit` initializes the environment for record and replay debugging. It checks if the environment is necessary for replay execution, initializes an internal system call definition lists, and creates necessary directories for storing replay tests.
+
+2. `rrtest`
+
+`rrtest` automates the creation of CrashSimulator-compliant tests.
+
+This application-level script enables the user to perform a preemptive record and replay execution, such that a strace segment is produced. This strace can then
+be compared against a ReplaySession debug log in order to determine corresponding events and trace lines, such that a final test can be produced and stored. Once
+complete, a user can utilize `rreplay` in order to execute another replay execution.
+
+3. `rreplay`
+
+`rreplay` enables the actual debugging to occur, performing a replay on a pre-recorded test and driving the injector to interact with `syscallreplay` and `posix-omni-parser` to check for divergences and bugs that occur between trace and execution.
 
 # Requirements
 
-* Supported OS:
+* A i386 Linux-based distribution (preferably Ubuntu)
 
-```
-uname -a Linux dev.local 3.19.0-49-generic #55-Ubuntu SMP Fri Jan 22 02:09:44 UTC 2016 i686 i686 i686 GNU/Linux
-```
+* Python 2.7.x
 
 * ASLR Disabled:
 
 ```
 echo 0 | sudo tee /proc/sys/kernel/randomize\_va\_space
+
+# for startup
+echo kernel.randomize\_va\_space = 0 > /etc/sysctl.d/01-disable-aslr.conf
 ```
 
-* kernel.randomize\_va\_space = 0 #in /etc/sysctl.d/01-disable-aslr.conf
+* Enable `ptrace` of processes
 
-* Python 2.7.9
+```
+echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
 
-* kernel.yama.ptrace\_scope = 0  in /etc/sysctl.d/10-ptrace.conf on modern Ubuntu
-
-* libpython2-dev
-
-* zlib
+# for startup
+echo kernel.yama.ptrace\_scope = 0 > /etc/sysctl.d/10-ptrace.conf
+```
 
 # Installation
 
@@ -189,4 +209,3 @@ during system call handling.  During this method call the mutator is expected to
 open, mutate, and write the mutated trace out to a file.  This method must
 return the filename of the mutated trace.  CrashSimulator will use this filename
 to drive testing rather than the unmodified file.
-
