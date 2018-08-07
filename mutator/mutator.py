@@ -61,7 +61,7 @@ class ConnectMutator(NullMutator):
             lines = f.readlines()
 
         for idx, line in enumerate(lines):
-            if self.match_line(line)
+            if self.match_line(line):
                 line[idx] = self.mutate_line(line)
 
 
