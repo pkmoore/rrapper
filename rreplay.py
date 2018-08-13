@@ -159,9 +159,10 @@ def wait_on_handles(subjects):
 
 
 def cleanup():
-    os.unlink('proc.out')
-    os.unlink('rrdump_proc.pipe')
-
+    file_list = ['proc.out', 'rrdump_proc.pipe']
+    for f in file_list:
+        if os.path.exists(f):
+            os.unlink(f)
 
 def main(ini_path):
     rr_dir, subjects = get_configuration(ini_path)
