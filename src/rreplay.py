@@ -1,11 +1,28 @@
 #!/usr/bin/env python2
 # pylint: disable=missing-docstring, unused-argument, invalid-name,
-"""Run rr and attach injectors appropriately based on the specified config
 """
+<Program Name>
+  rreplay.py
+
+<Started>
+  November 2017
+
+<Author>
+  Preston Moore
+  Alan Cao
+
+<Purpose>
+  Performs a replay of a rrtest-formatted test, parsing the config.ini
+  file and hooking onto the rrdump pipe for data from the modified rr
+  process. This allows us to then call upon the injector, which compares
+  the trace against the execution for divergences / deltas.
+
+"""
+
+
 from __future__ import print_function
 
 import os
-import os.path
 import signal
 import sys
 import subprocess
@@ -13,9 +30,10 @@ import ConfigParser
 import json
 import logging
 import argparse
-from syscallreplay.util import process_is_alive
 
-logger = None
+import consts
+import syscallreplay.util as util
+
 
 # pylint: disable=global-statement
 rrdump_pipe = None
@@ -43,7 +61,7 @@ def get_message(pipe_name):
 
 def get_configuration(ini_path):
     # instantiate new SafeConfigParser, read path to config
-    logger.debug("-- Begin parsing INI configuration file")
+    logging.debug("-- Begin parsing INI configuration file")
     cfg = ConfigParser.SafeConfigParser()
     found = cfg.read(ini_path)
     if ini_path not in found:
@@ -56,7 +74,7 @@ def get_configuration(ini_path):
 
     # set rr_dir as specified key-value pair in config, cut out first element
     # in list
-    logger.debug("-- Discovering replay directory")
+    logging.debug("-- Discovering replay directory")
     rr_dir_section = sections[0]
     rr_dir = cfg.get(rr_dir_section, 'rr_dir')
     sections = sections[1:]
@@ -99,7 +117,7 @@ def execute_rr(rr_dir, subjects):
         events_str += i['rec_pid'] + ':' + i['event'] + ','
 
     my_env = os.environ.copy()
-    logger.debug("-- Executing replay command and writing to proc.out")
+    logging.debug("-- Executing replay command and writing to proc.out")
     # execute rr with spin-off switch.  Output tossed into proc.out
     command = ['rr', 'replay', '-a', '-n', events_str, rr_dir]
     with open('proc.out', 'w') as f:
@@ -119,7 +137,7 @@ def process_messages(subjects):
         event = parts[2]
         pid = parts[4]
         # Wait until we can see the process reported by rr to continue
-        while not process_is_alive(pid):
+        while not util.process_is_alive(pid):
             print('waiting...')
         operating = [x for x in subjects if x['event'] == event]
 
@@ -132,8 +150,8 @@ def process_messages(subjects):
             tmp['config'] = s
             with open(s['injected_state_file'], 'w') as d:
                 json.dump(tmp, d)
-            s['handle'] = subprocess.Popen(['python',
-                                            './inject.py',
+
+            s['handle'] = subprocess.Popen(['inject',
                                             s['injected_state_file']])
             subjects_injected += 1
         elif inject == 'DONT_INJECT':
@@ -159,82 +177,67 @@ def wait_on_handles(subjects):
 
 
 def cleanup():
-    file_list = ['proc.out', 'rrdump_proc.pipe']
-    for f in file_list:
-        if os.path.exists(f):
-            os.unlink(f)
-
-def main(ini_path):
-    rr_dir, subjects = get_configuration(ini_path)
-    execute_rr(rr_dir, subjects)
-    process_messages(subjects)
-    wait_on_handles(subjects)
-    cleanup()
-
-
-def parse_arguments():
-    # initialize argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-v',
-                        '--verbosity',
-                        dest='verbosity',
-                        help='output based on verbosity level')
-    parser.add_argument('path',
-                        help='specify INI configuration path for replay')
-
-    return parser.parse_args()
-
-
-def configure_logging(level):
-    # pylint: disable=global-statement
-    global logger
-    log_levels = {"1": logging.INFO, "2": logging.DEBUG}
-    logging.basicConfig(level=log_levels.get(args.verbosity, logging.ERROR))
-    # set level of logging based on argument parsing
-    logger = logging.getLogger(__name__)
-    # pylint: enable=global-statement
-
-
-def check_environment():
-    # check to see if rrdump pipe exists, and if so, unlink
+    if os.path.exists('proc.out'):
+        os.unlink('proc.out')
     if os.path.exists('rrdump_proc.pipe'):
         os.unlink('rrdump_proc.pipe')
 
-    # check to see rr is a valid shell-level command. Error status is nonzero
-    try:
-        with open(os.devnull, 'w') as fnull:
-            subprocess.check_call(['rr', 'help'],
-                                  stdout=fnull,
-                                  stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError:
-        logger.error('rr was found but "rr help" exited with an error.')
-        logger.error('Make sure your Python venv has the required rrdump '
-                     'module.')
-        sys.exit(1)
-    except OSError:
-        logger.error('The rr command was not found.  Make sure it is '
-                     ' installed somewhere described by your $PATH')
-        sys.exit(1)
 
-    # ensure syscall_definitions.pickle exists.  If it doesn, generate it.
-    if not os.path.exists('syscall_definitions.pickle'):
-        logger.error('We need to re-generate syscall_definitions.pickle')
-        try:
-            subprocess.check_call(['python', 'parse_syscall_definitions.py'])
-        except subprocess.CalledProcessError:
-            logger.error('parse_syscall_definitions.py returned an error')
-            sys.exit(1)
+  
+def main():
+
+     # initialize argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v', '--verbosity',
+                        dest='loglevel',
+                        action='store_const',
+                        const=logging.DEBUG,
+                        help='flag for displaying debug information')
+    parser.add_argument('testname',
+                        help='specify rrtest-created test for replay')
+    
+    # parse arguments
+    args = parser.parse_args()
+
+    # add simple logging for verbosity
+    logging.basicConfig(level=args.loglevel)
+    
+    # ensure that a pre-existing pipe is unlinked before execution
+    if os.path.exists('rrdump_proc.pipe'):
+        os.unlink('rrdump_proc.pipe')
+
+    # check if user-specified test exists
+    test_dir = consts.DEFAULT_CONFIG_PATH + args.testname
+    if not os.path.exists(test_dir):
+        print("Test {} does not exist. Create before attempting to configure!" \
+                .format(args.testname))
+        sys.exit(1)
+    
+    # read config.ini from the test directory
+    rr_dir, subjects = get_configuration(test_dir + "/" + "config.ini")
+    
+    # execute rr
+    execute_rr(rr_dir, subjects)
+    
+    # process pipe messages
+    process_messages(subjects)
+    
+    # wait on handles
+    wait_on_handles(subjects)
+    
+    # cleanup routine
+    cleanup()
 
 
 if __name__ == '__main__':
-    args = parse_arguments()
-    configure_logging(args.verbosity)
-    check_environment()
-
     try:
-        main(args.path)
+        main()
+        sys.exit(0)
+    
+    # if there is some sort of hanging behavior, we can cleanup if user sends a
+    # SIGINT
     except KeyboardInterrupt:
-        logger.debug("Killing rrapper\nDumping proc.out")
+        logging.debug("Killing rreplay.\nDumping proc.out")
 
         # read output
         with open('proc.out', 'r') as content_file:
@@ -243,3 +246,9 @@ if __name__ == '__main__':
         # ensure clean exit by unlinking
         cleanup()
         sys.exit(0)
+    
+    # catch any other sort of exception that may occur, and ensure proper cleanup
+    # is still performed
+    except Exception:
+        cleanup()
+        sys.exit(1)
