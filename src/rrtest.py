@@ -225,7 +225,10 @@ def main():
 
     # retrieve system call name
     line = trace_lines[args.trace_line - 1]
-    name = line.split('  ')[1]
+    try:
+		  name = line.split('  ')[1]
+    except IndexError:
+			name = line.split(' ')[1]
     name = name[:name.find('(')]
 
     rr_lines = [x for x in rr_lines if re.search(r'.*ENTERING_SYSCALL', x)]

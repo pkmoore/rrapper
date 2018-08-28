@@ -7,8 +7,9 @@ import os
 import signal
 import json
 import traceback
-
 import logging
+
+import consts
 
 from posix_omni_parser import Trace
 
@@ -347,7 +348,8 @@ def exit_with_status(pid, code):
     sys.exit(code)
 
 
-def main(config):
+def main():
+    config = sys.argv[1]
     # Sets up syscallreplay.injected_state['config']
     consume_configuration(config)
     # Configure various locals from the config section of our injected state
@@ -356,7 +358,10 @@ def main(config):
     rec_pid = config_dict['rec_pid']
     apply_open_fds(rec_pid)
     apply_mmap_backing_files()
-    trace = Trace.Trace(config_dict['trace_file'])
+
+		# create trace object
+    pickle_file = consts.DEFAULT_CONFIG_PATH + "syscall_definitions.pickle"
+    trace = Trace.Trace(config_dict['trace_file'], pickle_file)
     syscallreplay.syscalls = trace.syscalls
     syscallreplay.syscall_index = int(config_dict['trace_start'])
     syscallreplay.syscall_index_end = int(config_dict['trace_end'])
@@ -419,6 +424,5 @@ def main(config):
                 print('####  End Checker Status  ####')
             exit_with_status(pid, 0)
 
-
 if __name__ == '__main__':
-    main(sys.argv[1])
+    main()

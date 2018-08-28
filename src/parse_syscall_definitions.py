@@ -36,6 +36,7 @@ import signal
 import subprocess
 import pickle
 
+import consts
 from sysDef.SyscallManual import SyscallManual, SyscallManualException
 
 
@@ -210,7 +211,7 @@ def pickle_syscall_definitions(syscall_definitions_list, target_dir):
 
 
 
-def generate_pickle(target_dir='./'):
+def generate_pickle(target_dir=consts.DEFAULT_CONFIG_PATH):
     
     # get a list with all the system call names available in this system.
     syscall_names_list = parse_syscall_names_list()
