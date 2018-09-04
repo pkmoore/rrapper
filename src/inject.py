@@ -70,6 +70,8 @@ def _kill_parent_process(pid):
     os.kill(tgid, signal.SIGKILL)
   else:
     os.kill(pid, signal.SIGKILL)
+  # Alan: ensure file is closed
+  proc_file.close()
 
 
 
