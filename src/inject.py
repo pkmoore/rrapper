@@ -27,6 +27,7 @@ import signal
 import json
 import traceback
 import logging
+import argparse
 
 import consts
 
@@ -482,9 +483,29 @@ def exit_with_status(pid, code):
 
 
 def main():
-  config = sys.argv[1]
+  # initialize parser
+  parser = argparse.ArgumentParser()
+  parser.add_argument('config',
+                      metavar='config',
+                      nargs=1,
+                      type=str,
+                      help="path to configuration file")
+  parser.add_argument('-v', '--verbosity',
+                      dest='loglevel',
+                      action='store_const',
+                      const=logging.DEBUG,
+                      help='flag for displaying debug information')
+
+  # parser arguments
+  args = parser.parse_args()
+
+  # Add simple logging for verbosity
+  logging.basicConfig(level=args.loglevel)
+
   # Sets up syscallreplay.injected_state['config']
+  config = "".join(args.config)
   consume_configuration(config)
+
   # Configure various locals from the config section of our injected state
   config_dict = syscallreplay.injected_state['config']
   pid = int(config_dict['pid'])
