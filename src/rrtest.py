@@ -296,9 +296,40 @@ def main():
 
     sys.exit(0)
 
+  elif args.cmd == "list":
+
+    # print only filenames of tests in DEFAULT_CONFIG_PATH
+    print("\nAvailable Tests:\n----------------")
+    for test in os.listdir(consts.DEFAULT_CONFIG_PATH):
+      # check if file is a directory, since tests are generated as them
+      if os.path.isdir(os.path.join(consts.DEFAULT_CONFIG_PATH, test)):
+        print(test)
+
+    print("")
+    sys.exit(0)
+
+  elif args.cmd == "pack":
+
+    # check for mandatory arguments
+    man_options = ['name']
+    for opt in man_options:
+      if not args.__dict__[opt]:
+        parser.print_help()
+        sys.exit(1)
+
+    # perform a rr pack on the test directory
+    test_dir = consts.DEFAULT_CONFIG_PATH + args.name
+    subprocess.Popen(["rr", "pack", test_dir]) 
+
+    # zip up specified directory with zipf handle
+    shutil.make_archive(args.name, 'zip', test_dir)
+
+    print("Packed up trace and stored as {}".format(args.name + ".zip"))
+    sys.exit(0)
+
 
 
 
 
 if __name__ == '__main__':
-    main()
+  main()
