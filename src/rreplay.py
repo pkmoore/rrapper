@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# pylint: disable=missing-docstring, unused-argument, invalid-name,
+# pylint: disable=bad-indentation, unused-argument, invalid-name,
 """
 <Program Name>
   rreplay.py
@@ -40,6 +40,16 @@ rrdump_pipe = None
 
 
 def get_message(pipe_name):
+  """
+  <Purpose>
+    Opens a named pipe for communication between
+    modified rr and rreplay. This allows for messages
+    to be read and returned in a buffer for further processing.
+
+  <Returns>
+    buf: a list of messages collected from the named pipe
+
+  """
   global rrdump_pipe
 
   # check if pipe path exists
@@ -62,6 +72,14 @@ def get_message(pipe_name):
 
 
 def get_configuration(ini_path):
+  """
+  <Purpose>
+
+  <Returns>
+    rr_dir: the directory in which the rr-generated trace files are stored
+    subjects: a list of dicts that store parsed items from the config INI path
+
+  """
   # instantiate new SafeConfigParser, read path to config
   logging.debug("-- Begin parsing INI configuration file")
   cfg = ConfigParser.SafeConfigParser()
@@ -115,6 +133,15 @@ def get_configuration(ini_path):
 
 
 def execute_rr(rr_dir, subjects):
+  """
+  <Purpose>
+    Create a new event string with pid and event for rr replay,
+    and then actually execute rr with the string.
+
+  <Returns>
+    None
+
+  """
   # create a new event string listing pid to record and event to listen for
   # (e.g 14350:16154)
   events_str = ''
@@ -133,10 +160,21 @@ def execute_rr(rr_dir, subjects):
 
 
 def process_messages(subjects):
-  # A message on the pipe looks like:
-  # INJECT: EVENT: <event number> PID: <pid> REC_PID: <rec_pid>\n
-  # or
-  # DONT_INJECT: EVENT: <event number> PID: <pid> REC_PID: <rec_pid>\n
+  """
+  <Purpose>
+    Retrieves messages from the specified named pipe, and parse
+    accordingly. Once inject events are retrieved, a JSON file
+    is generated and the injector is called to work accordingly.
+
+    A message on the pipe looks like:
+    INJECT: EVENT: <event number> PID: <pid> REC_PID: <rec_pid>\n
+    or
+    DONT_INJECT: EVENT: <event number> PID: <pid> REC_PID: <rec_pid>\n
+
+  <Returns>
+    None
+
+  """
   subjects_injected = 0
   message = get_message('rrdump_proc.pipe')
   while message != '':
@@ -171,17 +209,32 @@ def process_messages(subjects):
 
 
 def wait_on_handles(subjects):
+  """
+  <Purpose>
+    Wait on handles for each subject. Ensure that other procs
+    are killed accordingly with SIGKILL.
+
+  <Returns>
+    None
+
+  """
   for s in subjects:
+
+    # check if handle is in subject
     if 'handle' in s:
       ret = s['handle'].wait()
     else:
       print('No handle associated with subject {}'.format(s))
       ret = -1
+
+    # check for other procs
     for i in s['other_procs']:
       try:
         os.kill(int(i), signal.SIGKILL)
       except OSError:
         pass
+
+    # print error if return value != 0
     if ret != 0:
       print('Injector for event:rec_pid {}:{} failed'
             .format(s['event'], s['rec_pid']))
@@ -191,6 +244,14 @@ def wait_on_handles(subjects):
 
 
 def cleanup():
+  """
+  <Purpose>
+    Delete generated output file and pipe if necessary.
+
+  <Returns>
+    None
+
+  """
   if os.path.exists('proc.out'):
     os.unlink('proc.out')
   if os.path.exists('rrdump_proc.pipe'):
