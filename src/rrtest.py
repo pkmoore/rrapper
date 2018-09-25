@@ -60,8 +60,8 @@ def rr_copy(src, dest):
   """
   <Purpose>
     Utilizes shutil's high-level copytree method in order
-    to copy any filetype from one destination to another.
-    It also ensures that ENOTDIR is handled properly by
+    to copy any filetype (including dirs) from one destination
+    to another. It also ensures that ENOTDIR is handled properly by
     attempting a regular copy.
 
   <Returns>
@@ -70,7 +70,19 @@ def rr_copy(src, dest):
   """
 
   try:
-    shutil.copytree(src, dest)
+    # check if path is a directory
+    if os.path.isdir(src):
+      for item in os.listdir(src):
+        s_file = os.path.join(src, item)
+        d_file = os.path.join(dest, item)
+        if os.path.isdir(s_file):
+          shutil.copytree(s_file, d_file)
+        else:
+          shutil.copy2(s_file, d_file)
+
+    # otherwise copy the filetype normally
+    else:
+      shutil.copytree(src, dest)
   except OSError as exc:
     if exc.errno == errno.ENOTDIR:
       shutil.copy(src, dest)
@@ -87,6 +99,8 @@ def main():
   # two commands - create / configure
   create_group = subparsers.add_parser('create')
   configure_group = subparsers.add_parser('configure')
+  list_group = subparsers.add_parser('list')
+  pack_group = subparsers.add_parser('pack')
 
   # ./rrtest create -n testname -c "./runthisbinary"
   create_group.set_defaults(cmd='create')
@@ -111,6 +125,15 @@ def main():
                                default=5,
                                type=int,
                                help='number of lines to create a strace snippet')
+
+  # ./rrtest list
+  list_group.set_defaults(cmd='list')
+
+  # ./rrtest pack -n testname
+  pack_group.set_defaults(cmd='pack')
+  pack_group.add_argument('-n', '--name',
+                              dest='name',
+                              help='name of the test to be packed')
 
   # general flags to be set
   parser.add_argument('-v', '--verbosity',
@@ -153,7 +176,7 @@ def main():
     testname = os.path.realpath(consts.RR_TEST_CONFIG_PATH + "latest-trace")
 
     # copy rr recorded test into our own directory
-    #rr_copy(testname, test_dir + testname)
+    rr_copy(testname, test_dir)
 
     # copy rr produced strace into our own directory
     rr_copy(consts.STRACE_DEFAULT, test_dir + consts.STRACE_DEFAULT)
@@ -161,7 +184,7 @@ def main():
     # create INI config file
     config = ConfigParser.ConfigParser()
     config.add_section("rr_recording")
-    config.set("rr_recording", "rr_dir", testname)
+    config.set("rr_recording", "rr_dir", test_dir)
 
     config.add_section("request_handling_process")
     config.set("request_handling_process", "event", None)
@@ -273,9 +296,40 @@ def main():
 
     sys.exit(0)
 
+  elif args.cmd == "list":
+
+    # print only filenames of tests in DEFAULT_CONFIG_PATH
+    print("\nAvailable Tests:\n----------------")
+    for test in os.listdir(consts.DEFAULT_CONFIG_PATH):
+      # check if file is a directory, since tests are generated as them
+      if os.path.isdir(os.path.join(consts.DEFAULT_CONFIG_PATH, test)):
+        print(test)
+
+    print("")
+    sys.exit(0)
+
+  elif args.cmd == "pack":
+
+    # check for mandatory arguments
+    man_options = ['name']
+    for opt in man_options:
+      if not args.__dict__[opt]:
+        parser.print_help()
+        sys.exit(1)
+
+    # perform a rr pack on the test directory
+    test_dir = consts.DEFAULT_CONFIG_PATH + args.name
+    subprocess.Popen(["rr", "pack", test_dir]) 
+
+    # zip up specified directory with zipf handle
+    shutil.make_archive(args.name, 'zip', test_dir)
+
+    print("Packed up trace and stored as {}".format(args.name + ".zip"))
+    sys.exit(0)
+
 
 
 
 
 if __name__ == '__main__':
-    main()
+  main()
