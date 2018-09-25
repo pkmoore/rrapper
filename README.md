@@ -38,6 +38,19 @@ $ echo kernel.yama.ptrace_scope = 0 | sudo tee /etc/sysctl.d/10-ptrace.conf
 
 ## 3.0 Installation
 
+### Automated Installation _(with Docker)_
+
+We use Docker in order to deploy the entire CrashSimulator codebase into an isolated container.
+
+```
+$ docker build -t crashsimulator .
+$ docker run -it crashsimulator
+```
+
+This starts an interactive session within the Ubuntu image in the container with all the necessar components installed.
+
+### Manual Installation
+
 After cloning this repository a few dependencies must be put in place:
 
 First, initialize a `virtualenv`:
