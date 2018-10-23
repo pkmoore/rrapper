@@ -47,7 +47,7 @@ $ docker build -t crashsimulator .
 $ docker run -it crashsimulator
 ```
 
-This starts an interactive session within the Ubuntu image in the container with all the necessar components installed.
+This starts an interactive session within the Ubuntu image in the container with all the necessary components installed.
 
 ### Manual Installation
 
@@ -82,7 +82,7 @@ Before the user can create any tests and perform a record-replay
 execution, the testing environment must be optimal for such use. This
 application-level script checks for an optimal microarchitecture,
 update necessary proc entries, creates a path for storing tests and
-configs, and also generates the necessary system call definition file.
+configurations, then generates the necessary system call definition file.
 
 By running `rrinit`, a lot of the work can be taken out of `rrtest`
 and `rreplay`, and users are able to catch environmental anomalies
@@ -205,7 +205,7 @@ exercise your test case.
 CrashSimulator supports user supplied checkers implemented in Python.  These
 checkers consist of Python classes that support a specific set of methods as
 described below.  Checkers receive the sequence of system calls as they are
-handled by CrashSimulator.  The checker is reponsible for examining these system
+handled by CrashSimulator.  The checker is responsible for examining these system
 calls and making a decision as to whether the application took a specific action
 or not.  Built in checkers use a form of state machine to make this decision but
 users are free to track state using whatever model they prefer.
@@ -225,7 +225,7 @@ transition(self, syscall_object)
 
 This method is called for every system call entrance and exit handled by
 CrashSimulator.  The supplied `syscall_object` is a posix-omni-parser--like object
-meaning tthings like parameters and return values can be examined.
+meaning things like parameters and return values can be examined.
 
 
 ```
