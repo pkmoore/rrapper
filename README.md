@@ -40,11 +40,13 @@ $ echo kernel.yama.ptrace_scope = 0 | sudo tee /etc/sysctl.d/10-ptrace.conf
 
 ### Automated Installation _(with Docker)_
 
-We use Docker in order to deploy the entire CrashSimulator codebase into an isolated container.
+We use Docker in order to deploy the entire CrashSimulator codebase into an isolated container. The
+`--cap-add=SYS_PTRACE` and `--security-opt seccomp=unconfined` flags are required to allow the usage of
+the `ptrace`, `perf_event_open`, and `process_vm_writev` system calls by rr within the container.
 
 ```
 $ docker build -t crashsimulator .
-$ docker run -it crashsimulator
+$ docker run --cap-add=SYS_PTRACE --security-opt seccomp=unconfined -it crashsimulator
 ```
 
 This starts an interactive session within the Ubuntu image in the container with all the necessary components installed.
