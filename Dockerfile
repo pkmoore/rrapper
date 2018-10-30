@@ -1,4 +1,5 @@
 FROM ubuntu
+ENV MAKEFLAGS="-j8"
 
 ########################
 # Initialization
@@ -10,12 +11,13 @@ RUN apt-get -q -y install \
       ccache cmake make g++-multilib gdb libdw-dev \
       pkg-config coreutils python-pexpect manpages-dev git \
       ninja-build capnproto libcapnp-dev autoconf \
-      libpython2.7-dev zlib1g-dev python-pip
+      libpython2.7-dev zlib1g-dev python-pip \
+      gawk man libbz2-dev libunwind-dev
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # get necessary CrashSimulator repos
 RUN git clone -b spin-off https://github.com/pkmoore/rr
-RUN git clone https://github.com/pkmoore/rrapper
+RUN git clone https://github.com/pkmoore/rrapper rr/rrapper
 
 # create a new nonroot user
 RUN useradd crashsim -m
@@ -27,15 +29,13 @@ RUN useradd crashsim -m
 WORKDIR rr/
 
 # compile and install the modified strace
-RUN cd third-party/strace && ./bootstrap && autoreconf && \
-    ./configure && make && make install
+RUN cd third-party/strace && ./bootstrap && autoreconf -fim && make install
 
 # compile and install rr
-RUN mkdir obj && cd obj && cmake .. && make -j8 && \
-    make install
+RUN mkdir obj && cd obj && cmake .. && make install
 
 ########################
-# Installing rrapper 
+# Installing rrapper
 ########################
 
 WORKDIR rrapper/
@@ -54,4 +54,4 @@ RUN python setup.py install
 ########################
 
 USER crashsim
-RUN rrinit
+RUN env rrinit
