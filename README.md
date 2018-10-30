@@ -51,6 +51,16 @@ $ docker run --cap-add=SYS_PTRACE --security-opt seccomp=unconfined -it crashsim
 
 This starts an interactive session within the Ubuntu image in the container with all the necessary components installed.
 
+### Automated Installation _(with Vagrant)_
+
+As an alternative, Vagrant can provide virtualization and isolation through libvirt while also automating the build process. This is good for macOS users, who want to bootstrap and deploy CrashSimulator as soon as possible.
+
+```
+$ vagrant plugin install vagrant-libvirt
+$ vagrant up --provider=libvirt
+$ vagrant ssh
+```
+
 ### Manual Installation
 
 After cloning this repository a few dependencies must be put in place:
