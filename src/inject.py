@@ -515,7 +515,7 @@ def main():
 
 	# create trace object
   pickle_file = consts.DEFAULT_CONFIG_PATH + "syscall_definitions.pickle"
-  trace = Trace.Trace(config_dict['trace_file'], pickle_file)
+  trace = Trace.Trace(config_dict['trace_file'])
   syscallreplay.syscalls = trace.syscalls
   syscallreplay.syscall_index = int(config_dict['trace_start'])
   syscallreplay.syscall_index_end = int(config_dict['trace_end'])
