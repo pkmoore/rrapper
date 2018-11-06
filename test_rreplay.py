@@ -63,34 +63,34 @@ class TestExecuteRR(unittest.TestCase):
 
 
 #pylint disable=line-too-long
-class TestWaitOnHandles(unittest.TestCase):
-    """ Test wait_on_handles helper function
-    """
-
-    @mock.patch('subprocess.Popen')
-    @mock.patch('subprocess.Popen.wait')
-    @mock.patch('os.kill')
-    @mock.patch('signal.SIGKILL')
-    def test_injector_success(self, mock_sigkill, mock_kill, mock_wait, mock_popen):
-        """ Test handle wait for subjects successfully
-        """
-        s_handle = mock_popen(['python', 'test.py'])
-        subjects = [{'handle': s_handle, 'rec_pid': '123', 'event': '123', 'other_procs': [111, 112, 113, 114]}]
-
-        wait_on_handles(subjects)
-        mock_wait.assert_called_with(subjects[0]['handle'])
-        # test os.kill mock on last PID
-        mock_kill.assert_called_with(114, mock_sigkill)
-
-
-    @mock.patch('os.kill')
-    @mock.patch('signal.SIGKILL')
-    def test_injector_fail(self, mock_sigkill, mock_kill):
-        """ Test failed injector on because of no handles
-        """
-        subjects = [{'rec_pid': '123', 'event': '123', 'other_procs': [111, 112, 113, 114]}]
-
-        wait_on_handles(subjects)
-        # test os.kill mock on last PID
-        mock_kill.assert_called_with(114, mock_sigkill)
+#class TestWaitOnHandles(unittest.TestCase):
+#    """ Test wait_on_handles helper function
+#    """
+#
+#    @mock.patch('subprocess.Popen')
+#    @mock.patch('subprocess.Popen.wait')
+#    @mock.patch('os.kill')
+#    @mock.patch('signal.SIGKILL')
+#    def test_injector_success(self, mock_sigkill, mock_kill, mock_wait, mock_popen):
+#        """ Test handle wait for subjects successfully
+#        """
+#        s_handle = mock_popen(['python', 'test.py'])
+#        subjects = [{'handle': s_handle, 'rec_pid': '123', 'event': '123', 'other_procs': [111, 112, 113, 114]}]
+#
+#        wait_on_handles(subjects)
+#        mock_wait.assert_called_with(subjects[0]['handle'])
+#        # test os.kill mock on last PID
+#        mock_kill.assert_called_with(114, mock_sigkill)
+#
+#
+##    @mock.patch('os.kill')
+#    @mock.patch('signal.SIGKILL')
+#    def test_injector_fail(self, mock_sigkill, mock_kill):
+#        """ Test failed injector on because of no handles
+#        """
+#        subjects = [{'rec_pid': '123', 'event': '123', 'other_procs': [111, 112, 113, 114]}]
+#
+#        wait_on_handles(subjects)
+#        # test os.kill mock on last PID
+#        mock_kill.assert_called_with(114, mock_sigkill)
 #pylint enable=line-too-long
