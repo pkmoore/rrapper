@@ -39,6 +39,12 @@ $ echo 1 | sudo tee /proc/sys/kernel/perf_event_paranoid
 ```
 Note that some of these settings can be reverted upon system restart.
 
+* An installed and working copy of our modified version of rr located [here](https://github.com/pkmoore/rr/)
+
+**Very Important Note: You must pull and use the spin-off branch from the repository containing our modified version of rr.  The master branch tracks the unmodified version of rr provided by mozilla/rr**
+
+Other dependencies that may need to be installed using your Linux distribution's package manager:
+
 * Python 2.7.x
 * libpython2-dev
 * zlib
