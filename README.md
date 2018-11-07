@@ -32,6 +32,13 @@ $ echo kernel.randomize_va_space = 0 | sudo tee /etc/sysctl.d/01-disable-aslr.co
 $ echo kernel.yama.ptrace_scope = 0 | sudo tee /etc/sysctl.d/10-ptrace.conf
 ```
 
+* Allow access to kernel perf events
+
+```
+$ echo 1 | sudo tee /proc/sys/kernel/perf_event_paranoid
+```
+Note that some of these settings can be reverted upon system restart.
+
 * Python 2.7.x
 * libpython2-dev
 * zlib
