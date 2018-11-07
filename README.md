@@ -100,14 +100,13 @@ and perform record-replay execution.
 
 ### 4.1 `rrinit`
 
-`rrinit` executes initialization routines for the creation of a CrashSimulator
-environment.
+`rrinit` makes an effort to configure your virtual machine with many of
+the requirements mentioned above.  There is a possibility it will will
+not be able to do so.
 
-Before the user can create any tests and perform a record-replay
-execution, the testing environment must be optimal for such use. This
-application-level script checks for an optimal microarchitecture,
-update necessary proc entries, creates a path for storing tests and
-configurations, then generates the necessary system call definition file.
+This command also checks for the presence of a supported microarchitecture,
+creates a path for storing tests and configurations, 
+then generates the necessary system call definition file.
 
 ```
 $ rrinit    # ... is all you need!
