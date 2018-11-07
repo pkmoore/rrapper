@@ -32,6 +32,19 @@ $ echo kernel.randomize_va_space = 0 | sudo tee /etc/sysctl.d/01-disable-aslr.co
 $ echo kernel.yama.ptrace_scope = 0 | sudo tee /etc/sysctl.d/10-ptrace.conf
 ```
 
+* Allow access to kernel perf events
+
+```
+$ echo 1 | sudo tee /proc/sys/kernel/perf_event_paranoid
+```
+Note that some of these settings can be reverted upon system restart.
+
+* An installed and working copy of our modified version of rr located [here](https://github.com/pkmoore/rr/)
+
+**Very Important Note: You must pull and use the spin-off branch from the repository containing our modified version of rr.  The master branch tracks the unmodified version of rr provided by mozilla/rr**
+
+Other dependencies that may need to be installed using your Linux distribution's package manager:
+
 * Python 2.7.x
 * libpython2-dev
 * zlib
@@ -87,14 +100,13 @@ and perform record-replay execution.
 
 ### 4.1 `rrinit`
 
-`rrinit` executes initialization routines for the creation of a CrashSimulator
-environment.
+`rrinit` makes an effort to configure your virtual machine with many of
+the requirements mentioned above.  There is a possibility it will will
+not be able to do so.
 
-Before the user can create any tests and perform a record-replay
-execution, the testing environment must be optimal for such use. This
-application-level script checks for an optimal microarchitecture,
-update necessary proc entries, creates a path for storing tests and
-configurations, then generates the necessary system call definition file.
+This command also checks for the presence of a supported microarchitecture,
+creates a path for storing tests and configurations, 
+then generates the necessary system call definition file.
 
 ```
 $ rrinit    # ... is all you need!
