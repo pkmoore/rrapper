@@ -278,9 +278,15 @@ def main():
 
     # output each potential event, plus lines that come before and after it.
     for i in potentials:
+      ctx = 5
       event_num = re.search(r'event [0-9]*', rr_lines[i]).group(0).split(' ')[1]
       print('--- Potential event: {}'.format(event_num))
-      for j in rr_lines[i-5:i+5]:
+      #  trim context if too close to the head or tail of list
+      if ctx >= i:
+        ctx = i
+      elif ctx + i >= len(rr_lines):
+        ctx = len(rr_lines) - i - 1
+      for j in rr_lines[i-ctx:i+ctx]:
         print(j, end='')
       print('---')
 
