@@ -253,12 +253,16 @@ def main():
     pid = trace_lines[0].split()[0]
 
     # retrieve system call name
-    line = trace_lines[args.trace_line - 1]
+    line=''
+    name=''
     try:
-		  name = line.split('  ')[1]
+      while len(line) == 0 and len(name) == 0:
+        line = trace_lines[args.trace_line - 1]
+        name = re.sub(r'^[0-9]+\s+', '', line)
+        name = re.sub(r'\(.*', '', name)
+        break
     except IndexError:
-			name = line.split(' ')[1]
-    name = name[:name.find('(')]
+        args.trace_line -= 1
 
     rr_lines = [x for x in rr_lines if re.search(r'.*ENTERING_SYSCALL', x)]
     rr_lines = rr_lines[find_first_execve(rr_lines):]
@@ -267,7 +271,9 @@ def main():
     # store a list of potential events
     potentials = []
     for idx, val in enumerate(rr_lines):
-      if re.search(name, val):
+      syscall = re.sub(r'.*SYSCALL:\s+', '', val)
+      syscall = re.sub(r';.*', '', syscall)
+      if name == syscall:
         potentials.append(idx)
 
     # output each potential event, plus lines that come before and after it.
