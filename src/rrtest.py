@@ -199,7 +199,13 @@ def main():
 
     # output trace to STDOUT for user to determine proper trace line
     with open(test_dir + consts.STRACE_DEFAULT, 'r') as trace:
-      print(trace.read())
+      lineno=0
+      line='<init>'
+      while len(line) > 0:
+        lineno += 1
+        line = trace.readline()
+        line = re.sub(r'^[0-9]+\s+', '', line)
+        print('LINE ' + str(lineno) + ': ' + line, end='')
     sys.exit(0)
 
   elif args.cmd == 'configure':
