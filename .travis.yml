@@ -2,8 +2,12 @@ language: python
 python: 
   - "2.7"
 
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y gcc-multilib
+
 install:
-  - pip install -r test_requirements.txt
+  - pip install -r requirements.txt
 
 script:
   - nosetests
