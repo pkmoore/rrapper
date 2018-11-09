@@ -12,7 +12,10 @@ before_install:
   - source crashsim/bin/activate
 
 install:
-  - pip install -r requirements.txt
+  - pip install -r test_requirements.txt
+  - git clone https://github.com/pkmoore/syscallreplay
+  - cd syscallreplay
+  - python setup.py install -p i386
 
 script:
   - nosetests
