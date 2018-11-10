@@ -37,7 +37,8 @@ import subprocess
 import pickle
 
 import consts
-from sysDef.SyscallManual import SyscallManual, SyscallManualException
+from sysDef.SyscallManual import SyscallManual
+from sysDef.SyscallManual import SyscallManualException
 
 
 def parse_syscall_names_list():
