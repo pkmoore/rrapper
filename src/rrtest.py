@@ -199,7 +199,13 @@ def main():
 
     # output trace to STDOUT for user to determine proper trace line
     with open(test_dir + consts.STRACE_DEFAULT, 'r') as trace:
-      print(trace.read())
+      lineno=0
+      line='<init>'
+      while len(line) > 0:
+        lineno += 1
+        line = trace.readline()
+        line = re.sub(r'^[0-9]+\s+', '', line)
+        print('LINE ' + str(lineno) + ': ' + line, end='')
     sys.exit(0)
 
   elif args.cmd == 'configure':
@@ -247,12 +253,16 @@ def main():
     pid = trace_lines[0].split()[0]
 
     # retrieve system call name
-    line = trace_lines[args.trace_line - 1]
+    line=''
+    name=''
     try:
-		  name = line.split('  ')[1]
+      while len(line) == 0 and len(name) == 0:
+        line = trace_lines[args.trace_line - 1]
+        name = re.sub(r'^[0-9]+\s+', '', line)
+        name = re.sub(r'\(.*', '', name)
+        break
     except IndexError:
-			name = line.split(' ')[1]
-    name = name[:name.find('(')]
+        args.trace_line -= 1
 
     rr_lines = [x for x in rr_lines if re.search(r'.*ENTERING_SYSCALL', x)]
     rr_lines = rr_lines[find_first_execve(rr_lines):]
@@ -261,14 +271,22 @@ def main():
     # store a list of potential events
     potentials = []
     for idx, val in enumerate(rr_lines):
-      if re.search(name, val):
+      syscall = re.sub(r'.*SYSCALL:\s+', '', val)
+      syscall = re.sub(r';.*', '', syscall)
+      if name == syscall:
         potentials.append(idx)
 
     # output each potential event, plus lines that come before and after it.
     for i in potentials:
+      ctx = 5
       event_num = re.search(r'event [0-9]*', rr_lines[i]).group(0).split(' ')[1]
       print('--- Potential event: {}'.format(event_num))
-      for j in rr_lines[i-5:i+5]:
+      #  trim context if too close to the head or tail of list
+      if ctx >= i:
+        ctx = i
+      elif ctx + i >= len(rr_lines):
+        ctx = len(rr_lines) - i - 1
+      for j in rr_lines[i-ctx:i+ctx]:
         print(j, end='')
       print('---')
 
