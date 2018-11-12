@@ -33,6 +33,9 @@ import shutil
 import errno
 import ConfigParser
 
+from posix_omni_parser import Trace
+from checker.checker import NullChecker
+
 import consts
 
 
@@ -101,6 +104,7 @@ def main():
   configure_group = subparsers.add_parser('configure')
   list_group = subparsers.add_parser('list')
   pack_group = subparsers.add_parser('pack')
+  analyze_group = subparsers.add_parser('analyze')
 
   # ./rrtest create -n testname -c "./runthisbinary"
   create_group.set_defaults(cmd='create')
@@ -134,6 +138,15 @@ def main():
   pack_group.add_argument('-n', '--name',
                               dest='name',
                               help='name of the test to be packed')
+
+  # rrtest analyze -t tracename
+  analyze_group.set_defaults(cmd='analyze')
+  analyze_group.add_argument('-t', '--tracename',
+                             dest='tracename',
+                             help='name of trace to be analyzed')
+  analyze_group.add_argument('-c', '--checker',
+                             dest='checker',
+                             help='checker constructor call to be eval()\'d')
 
   # general flags to be set
   parser.add_argument('-v', '--verbosity',
@@ -337,7 +350,7 @@ def main():
 
     # perform a rr pack on the test directory
     test_dir = consts.DEFAULT_CONFIG_PATH + args.name
-    subprocess.Popen(["rr", "pack", test_dir]) 
+    subprocess.Popen(["rr", "pack", test_dir])
 
     # zip up specified directory with zipf handle
     shutil.make_archive(args.name, 'zip', test_dir)
@@ -345,8 +358,18 @@ def main():
     print("Packed up trace and stored as {}".format(args.name + ".zip"))
     sys.exit(0)
 
-
-
+  elif args.cmd == 'analyze':
+    man_options = ['tracename']
+    for opt in man_options:
+      if not args.__dict__[opt]:
+        parser.print_help()
+        sys.exit(1)
+    pickle_file = consts.DEFAULT_CONFIG_PATH + "syscall_definitions.pickle"
+    trace = Trace.Trace(args.tracename, pickle_file)
+    checker = eval(args.checker)
+    for i in trace.syscalls:
+      checker.transition(i)
+    print(checker.is_accepting())
 
 
 if __name__ == '__main__':
