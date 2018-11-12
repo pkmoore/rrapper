@@ -129,6 +129,13 @@ def main():
                                default=5,
                                type=int,
                                help='number of lines to create a strace snippet')
+  configure_group.add_argument('-e', '--event',
+                               dest='event',
+                               help='event number')
+
+  configure_group.add_argument('-m', '--mutator',
+                               dest='mutator',
+                               help='mutator to use')
 
   # ./rrtest list
   list_group.set_defaults(cmd='list')
@@ -282,29 +289,32 @@ def main():
     rr_lines = [x for x in rr_lines if not re.search(r'replaying SYSCALL: time;', x)]
 
     # store a list of potential events
-    potentials = []
-    for idx, val in enumerate(rr_lines):
-      syscall = re.sub(r'.*SYSCALL:\s+', '', val)
-      syscall = re.sub(r';.*', '', syscall)
-      if name == syscall:
-        potentials.append(idx)
+    if not args.event:
+      potentials = []
+      for idx, val in enumerate(rr_lines):
+        syscall = re.sub(r'.*SYSCALL:\s+', '', val)
+        syscall = re.sub(r';.*', '', syscall)
+        if name == syscall:
+          potentials.append(idx)
 
-    # output each potential event, plus lines that come before and after it.
-    for i in potentials:
-      ctx = 5
-      event_num = re.search(r'event [0-9]*', rr_lines[i]).group(0).split(' ')[1]
-      print('--- Potential event: {}'.format(event_num))
-      #  trim context if too close to the head or tail of list
-      if ctx >= i:
-        ctx = i
-      elif ctx + i >= len(rr_lines):
-        ctx = len(rr_lines) - i - 1
-      for j in rr_lines[i-ctx:i+ctx]:
-        print(j, end='')
-      print('---')
+      # output each potential event, plus lines that come before and after it.
+      for i in potentials:
+        ctx = 5
+        event_num = re.search(r'event [0-9]*', rr_lines[i]).group(0).split(' ')[1]
+        print('--- Potential event: {}'.format(event_num))
+        #  trim context if too close to the head or tail of list
+        if ctx >= i:
+          ctx = i
+        elif ctx + i >= len(rr_lines):
+          ctx = len(rr_lines) - i - 1
+        for j in rr_lines[i-ctx:i+ctx]:
+          print(j, end='')
+        print('---')
 
-    # TODO: advanced regexes to automatically grab event number
-    user_event = input("\n\nEnter event number: ")
+      # TODO: advanced regexes to automatically grab event number
+      user_event = input("\n\nEnter event number: ")
+    else:
+      user_event = args.event
 
     # create a new strace snippet, with the event as the first line
     with open(test_dir + "trace_snip.strace", 'wb') as snip_file:
@@ -316,6 +326,8 @@ def main():
           break
 
     # update changes in config.ini
+    if args.mutator:
+      config.set("request_handling_process", "mutator", args.mutator)
     config.set("request_handling_process", "trace_file", test_dir + "trace_snip.strace")
     config.set("request_handling_process", "event", user_event)
     config.set("request_handling_process", "pid", pid)

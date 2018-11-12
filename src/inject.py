@@ -47,6 +47,8 @@ from syscallreplay import multiplex_handlers
 from syscallreplay import util
 from syscallreplay.util import ReplayDeltaError
 
+from mutator.mutator import NullMutator
+
 logging.basicConfig(stream=sys.stderr, level=4)
 
 
