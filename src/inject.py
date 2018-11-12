@@ -48,6 +48,7 @@ from syscallreplay import util
 from syscallreplay.util import ReplayDeltaError
 
 from mutator.mutator import NullMutator
+from mutator.UnusualFiletype import UnusualFiletypeMutator
 
 logging.basicConfig(stream=sys.stderr, level=4)
 
