@@ -50,6 +50,7 @@ from syscallreplay.util import ReplayDeltaError
 from mutator.mutator import NullMutator
 from mutator.UnusualFiletype import UnusualFiletypeMutator
 from mutator.ReverseTime import ReverseTimeMutator
+from mutator.CrossdiskRename import CrossdiskRenameMutator
 
 logging.basicConfig(stream=sys.stderr, level=4)
 
