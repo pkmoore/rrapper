@@ -37,7 +37,8 @@ $ echo kernel.yama.ptrace_scope = 0 | sudo tee /etc/sysctl.d/10-ptrace.conf
 ```
 $ echo -1 | sudo tee /proc/sys/kernel/perf_event_paranoid
 ```
-Note that some of these settings can be reverted upon system restart.
+**Note that some of these settings can be reverted upon system restart.**
+**Also note, if you are using a VMWare guest, you must enable virtualized hardware performance counters in your guest's settings**
 
 * An installed and working copy of our modified version of rr located [here](https://github.com/pkmoore/rr/)
 
