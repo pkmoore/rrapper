@@ -33,6 +33,9 @@ import shutil
 import errno
 import ConfigParser
 
+from posix_omni_parser import Trace
+from checker.checker import NullChecker
+
 import consts
 
 
@@ -101,6 +104,7 @@ def main():
   configure_group = subparsers.add_parser('configure')
   list_group = subparsers.add_parser('list')
   pack_group = subparsers.add_parser('pack')
+  analyze_group = subparsers.add_parser('analyze')
 
   # ./rrtest create -n testname -c "./runthisbinary"
   create_group.set_defaults(cmd='create')
@@ -125,6 +129,13 @@ def main():
                                default=5,
                                type=int,
                                help='number of lines to create a strace snippet')
+  configure_group.add_argument('-e', '--event',
+                               dest='event',
+                               help='event number')
+
+  configure_group.add_argument('-m', '--mutator',
+                               dest='mutator',
+                               help='mutator to use')
 
   # ./rrtest list
   list_group.set_defaults(cmd='list')
@@ -134,6 +145,15 @@ def main():
   pack_group.add_argument('-n', '--name',
                               dest='name',
                               help='name of the test to be packed')
+
+  # rrtest analyze -t tracename
+  analyze_group.set_defaults(cmd='analyze')
+  analyze_group.add_argument('-t', '--tracename',
+                             dest='tracename',
+                             help='name of trace to be analyzed')
+  analyze_group.add_argument('-c', '--checker',
+                             dest='checker',
+                             help='checker constructor call to be eval()\'d')
 
   # general flags to be set
   parser.add_argument('-v', '--verbosity',
@@ -269,29 +289,32 @@ def main():
     rr_lines = [x for x in rr_lines if not re.search(r'replaying SYSCALL: time;', x)]
 
     # store a list of potential events
-    potentials = []
-    for idx, val in enumerate(rr_lines):
-      syscall = re.sub(r'.*SYSCALL:\s+', '', val)
-      syscall = re.sub(r';.*', '', syscall)
-      if name == syscall:
-        potentials.append(idx)
+    if not args.event:
+      potentials = []
+      for idx, val in enumerate(rr_lines):
+        syscall = re.sub(r'.*SYSCALL:\s+', '', val)
+        syscall = re.sub(r';.*', '', syscall)
+        if name == syscall:
+          potentials.append(idx)
 
-    # output each potential event, plus lines that come before and after it.
-    for i in potentials:
-      ctx = 5
-      event_num = re.search(r'event [0-9]*', rr_lines[i]).group(0).split(' ')[1]
-      print('--- Potential event: {}'.format(event_num))
-      #  trim context if too close to the head or tail of list
-      if ctx >= i:
-        ctx = i
-      elif ctx + i >= len(rr_lines):
-        ctx = len(rr_lines) - i - 1
-      for j in rr_lines[i-ctx:i+ctx]:
-        print(j, end='')
-      print('---')
+      # output each potential event, plus lines that come before and after it.
+      for i in potentials:
+        ctx = 5
+        event_num = re.search(r'event [0-9]*', rr_lines[i]).group(0).split(' ')[1]
+        print('--- Potential event: {}'.format(event_num))
+        #  trim context if too close to the head or tail of list
+        if ctx >= i:
+          ctx = i
+        elif ctx + i >= len(rr_lines):
+          ctx = len(rr_lines) - i - 1
+        for j in rr_lines[i-ctx:i+ctx]:
+          print(j, end='')
+        print('---')
 
-    # TODO: advanced regexes to automatically grab event number
-    user_event = input("\n\nEnter event number: ")
+      # TODO: advanced regexes to automatically grab event number
+      user_event = input("\n\nEnter event number: ")
+    else:
+      user_event = args.event
 
     # create a new strace snippet, with the event as the first line
     with open(test_dir + "trace_snip.strace", 'wb') as snip_file:
@@ -303,6 +326,8 @@ def main():
           break
 
     # update changes in config.ini
+    if args.mutator:
+      config.set("request_handling_process", "mutator", args.mutator)
     config.set("request_handling_process", "trace_file", test_dir + "trace_snip.strace")
     config.set("request_handling_process", "event", user_event)
     config.set("request_handling_process", "pid", pid)
@@ -337,7 +362,7 @@ def main():
 
     # perform a rr pack on the test directory
     test_dir = consts.DEFAULT_CONFIG_PATH + args.name
-    subprocess.Popen(["rr", "pack", test_dir]) 
+    subprocess.Popen(["rr", "pack", test_dir])
 
     # zip up specified directory with zipf handle
     shutil.make_archive(args.name, 'zip', test_dir)
@@ -345,8 +370,18 @@ def main():
     print("Packed up trace and stored as {}".format(args.name + ".zip"))
     sys.exit(0)
 
-
-
+  elif args.cmd == 'analyze':
+    man_options = ['tracename']
+    for opt in man_options:
+      if not args.__dict__[opt]:
+        parser.print_help()
+        sys.exit(1)
+    pickle_file = consts.DEFAULT_CONFIG_PATH + "syscall_definitions.pickle"
+    trace = Trace.Trace(args.tracename, pickle_file)
+    checker = eval(args.checker)
+    for i in trace.syscalls:
+      checker.transition(i)
+    print(checker.is_accepting())
 
 
 if __name__ == '__main__':

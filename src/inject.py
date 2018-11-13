@@ -47,6 +47,11 @@ from syscallreplay import multiplex_handlers
 from syscallreplay import util
 from syscallreplay.util import ReplayDeltaError
 
+from mutator.mutator import NullMutator
+from mutator.UnusualFiletype import UnusualFiletypeMutator
+from mutator.ReverseTime import ReverseTimeMutator
+from mutator.CrossdiskRename import CrossdiskRenameMutator
+
 logging.basicConfig(stream=sys.stderr, level=4)
 
 
@@ -529,7 +534,9 @@ def main():
     checker = eval(syscallreplay.injected_state['config']['checker'])
   if 'mutator' in syscallreplay.injected_state['config']:
     mutator = eval(syscallreplay.injected_state['config']['mutator'])
-    mutator.mutate_trace(trace)
+    mutator.mutate_trace(config_dict['trace_file'])
+    trace = Trace.Trace(config_dict['trace_file'], pickle_file)
+    syscallreplay.syscalls = trace.syscalls
 # pylint: enable=eval-used
 
   # Requires kernel.yama.ptrace_scope = 0
