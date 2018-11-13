@@ -28,5 +28,7 @@ Possible values and their usual result:
 | S_IFLNK  | Symbolic Link    | Symlinks are good for tricking an application into processing one of the other filetypes
 | S_IFSOCK | Socket           | ??? Needs more experimenting
 
-
-
+This anomaly can be injected manually or with a command line similar to:
+```
+rrtest configure --event 714 --name aspell --traceline 352 --mutator='UnusualFiletypeMutator("S_IFBLK")'
+```
