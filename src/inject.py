@@ -253,6 +253,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
     (43, True): time_handlers.times_entry_handler,
     (45, True): kernel_handlers.brk_entry_handler,
     (45, False): kernel_handlers.brk_exit_handler,
+    (49, True): generic_handlers.syscall_return_success_handler,
     (60, True): generic_handlers.syscall_return_success_handler,
     (91, True): generic_handlers.check_return_value_entry_handler,
     (91, False): generic_handlers.check_return_value_exit_handler,
