@@ -136,7 +136,7 @@ configuration file.
 
 ```
 # first, you create a new test
-$ rrtest create --name mytest --comand "./myapplication"
+$ rrtest create --name mytest --command "./myapplication"
 # ... from the generated strace output, select the line of system call
 # you are interested in (i.e 100).
 
