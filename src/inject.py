@@ -295,7 +295,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
     #(33, True): syscall_return_success_handler,
     #(199, True): syscall_return_success_handler,
     #(200, True): syscall_return_success_handler,
-    #(201, True): syscall_return_success_handler,
+    (201, True): generic_handlers.syscall_return_success_handler,
     #(202, True): syscall_return_success_handler,
     (4, True): file_handlers.write_entry_handler,
     #(4, False): file_handlers.write_exit_handler,
