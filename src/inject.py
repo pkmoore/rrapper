@@ -314,7 +314,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
     (220, True): file_handlers.getdents64_entry_handler,
     (221, True): file_handlers.fcntl64_entry_handler,
     (272, True): generic_handlers.syscall_return_success_handler,
-    (250), True): generic_handlers.syscall_return_success_handler,
+    (250, True): generic_handlers.syscall_return_success_handler,
     #(141, True): getdents_entry_handler,
     #(142, False): getdents_exit_handler,
     #(82, True): select_entry_handler,
