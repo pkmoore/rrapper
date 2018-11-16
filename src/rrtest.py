@@ -211,7 +211,7 @@ def main():
     rr_copy(consts.STRACE_DEFAULT, test_dir + consts.STRACE_DEFAULT)
 
     #  fix incomplete exit_group(2) line
-    fixup_exit_group_cmd = ['sed', '-i', "'$ s/exit_group([^[:blank:])]*$/&) = -1/'", test_dir + consts.STRACE_DEFAULT]
+    fixup_exit_group_cmd = ['sed', '-i', "'$ s/exit_group([0-9]*[^)]*$/&) = -1/'", test_dir + consts.STRACE_DEFAULT]
     subprocess.call(" ".join(fixup_exit_group_cmd), shell=True)
 
     # create INI config file
