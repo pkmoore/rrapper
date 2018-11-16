@@ -257,22 +257,6 @@ def main():
     config.read(test_dir + "config.ini")
     testname = config.get("rr_recording", "rr_dir")
 
-    # create command and set proper environmental variable
-    os.environ['RR_LOG'] = 'ReplaySession'
-    rr_config_replay = ['rr', 'replay', '-a', testname]
-
-    # execute replay command, this time to compare against trace. We write the
-    # ReplaySession output to replaysession.log
-    out_fd = open(test_dir + "replaysession.log", 'wb')
-    proc = subprocess.Popen(rr_config_replay, stdout=out_fd, stderr=out_fd)
-    while proc.poll() is None:
-      pass
-    out_fd.close()
-
-    # open log for reading
-    with open(test_dir + "replaysession.log", 'r') as test_log:
-      rr_lines = test_log.readlines()
-
     # open trace file for reading
     with open(test_dir + consts.STRACE_DEFAULT, 'r') as trace_file:
       trace_lines = trace_file.readlines()
@@ -280,54 +264,27 @@ def main():
     # strip and breakdown pid
     pid = trace_lines[0].split()[0]
 
-    # retrieve system call name
-    line=''
-    name=''
-    try:
-      while len(line) == 0 and len(name) == 0:
-        line = trace_lines[args.trace_line - 1]
-        name = re.sub(r'^[0-9]+\s+', '', line)
-        name = re.sub(r'\(.*', '', name)
-        break
-    except IndexError:
-        args.trace_line -= 1
-
-    rr_lines = [x for x in rr_lines if re.search(r'.*ENTERING_SYSCALL', x)]
-    rr_lines = rr_lines[find_first_execve(rr_lines):]
-    rr_lines = [x for x in rr_lines if not re.search(r'replaying SYSCALL: time;', x)]
-
-    # store a list of potential events
     if not args.event:
-      potentials = []
-      for idx, val in enumerate(rr_lines):
-        syscall = re.sub(r'.*SYSCALL:\s+', '', val)
-        syscall = re.sub(r';.*', '', syscall)
-        if name == syscall:
-          potentials.append(idx)
+      # offset by -1 because line numbers start counting from 1
+      chosen_line = trace_lines[args.trace_line - 1 ]
+      if re.match(r'[0-9]+\s+\+\+\+\s+[0-9]+\s+\+\+\+', chosen_line):
+        print('It seems like you have chosen a line containing an rr event '
+              'number rather than a line containing a system call.  You '
+              'must select a line containing a system call')
+        sys.exit(1)
+      # We want the event JUST BEFORE our chosen system call so we must go
+      # back 2 lines from the chosen trace line
+      event_line = trace_lines[args.trace_line - 2 ]
 
-      # output each potential event, plus lines that come before and after it.
-      for i in potentials:
-        ctx = 5
-        event_num = re.search(r'event [0-9]*', rr_lines[i]).group(0).split(' ')[1]
-        print('--- Potential event: {}'.format(event_num))
-        #  trim context if too close to the head or tail of list
-        if ctx >= i:
-          ctx = i
-        elif ctx + i >= len(rr_lines):
-          ctx = len(rr_lines) - i - 1
-        for j in rr_lines[i-ctx:i+ctx]:
-          print(j, end='')
-        print('---')
+      user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
 
-      # TODO: advanced regexes to automatically grab event number
-      user_event = input("\n\nEnter event number: ")
     else:
       user_event = args.event
 
     # create a new strace snippet, with the event as the first line
     with open(test_dir + "trace_snip.strace", 'wb') as snip_file:
       # write a 5 line snippet file by default
-      for i in range(args.sniplen):
+      for i in range(0, args.sniplen * 2, 2):
         try:
           snip_file.write(trace_lines[args.trace_line - 1 + i])
         except IndexError:
