@@ -565,7 +565,7 @@ def main():
     syscall_object = syscallreplay.syscalls[syscallreplay.syscall_index]
     try:
       syscall_id = syscallreplay.peek_register(pid,
-                                               syscallreplay.ORIG_EAX)
+                                               syscallreplay.ORIG_RAX)
       debug_handle_syscall(pid,
                            syscall_id,
                            syscall_object,
