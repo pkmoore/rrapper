@@ -221,11 +221,19 @@ def main():
     with open(test_dir + consts.STRACE_DEFAULT, 'r') as trace:
       lineno=0
       line='<init>'
-      while len(line) > 0:
-        lineno += 1
+      last_endchar = '\n'
+      while True:
         line = trace.readline()
         line = re.sub(r'^[0-9]+\s+', '', line)
-        print('LINE ' + str(lineno) + ': ' + line, end='')
+        if len(line) == 0:
+          # append a newline at the end of output
+          print('')
+          break
+        lineno += 1
+        if last_endchar == '\n':
+          endchar = ''
+        print('LINE ' + str(lineno) + ': ' + line, end=endchar)
+        last_endchar = line[-1]
     sys.exit(0)
 
   elif args.cmd == 'configure':
