@@ -10,14 +10,9 @@ class UnusualFiletypeMutator:
       print('Both name and file_descriptor cannot be set at the same time')
       sys.exit(1)
     self.filetype = filetype
-    if name:
-      self.name = name
-    else:
-      self.name = None
-    if file_descriptor:
-      self.file_descriptor = file_descriptor
-    else:
-      self.file_descriptor = None
+    self.name = name
+    self.name = None
+    self.file_descriptor = file_descriptor
 
 
   def mutate_trace(self, trace):
