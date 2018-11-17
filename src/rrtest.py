@@ -114,6 +114,9 @@ def main():
   create_group.add_argument('-c', '--command',
                             dest='command',
                             help='specify command for rrtest')
+  create_group.add_argument('-f', '--force',
+                            dest='force',
+                            help='force overwrite creation of the test')
 
   # ./rrtest configure -n testname -e EVENT_NUM
   configure_group.set_defaults(cmd='configure')
@@ -180,11 +183,14 @@ def main():
 
     # initialize test directory in ~/.crashsim/xxxxx
     test_dir = consts.DEFAULT_CONFIG_PATH + args.name + "/"
-    try:
-      os.makedirs(test_dir)
-    except OSError as err:
-      if err.errno != errno.EEXIST:
-        raise
+    if os.path.isdir(test_dir) and args.force != 'YES':
+      print('A test with path {} already exists'.format(test_dir))
+      sys.exit(1)
+    elif os.path.isdir(test_dir) and args.force == 'YES':
+      logging.debug('Overwriting %s', test_dir)
+      shutil.rmtree(test_dir)
+
+    os.makedirs(test_dir)
 
     # call rr to record the command passed, store results within test directory
     # subprocess.call with shell=True is used, such that shell command formatting is
