@@ -43,5 +43,6 @@ class UnusualFiletypeMutator:
         if self.name:
           if self.name != v.args[0].value:
             continue
+        return k
 
 
