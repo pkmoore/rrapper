@@ -270,7 +270,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
     #(27, True): syscall_return_success_handler,
     (5, True): file_handlers.open_entry_handler,
     #(5, False): open_exit_handler,
-    #(85, True): readlink_entry_handler,
+    (85, True): file_handlers.readlink_entry_handler,
     #(93, True): ftruncate_entry_handler,
     #(93, False): ftruncate_exit_handler,
     (94, True): file_handlers.fchmod_entry_handler,
