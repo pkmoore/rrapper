@@ -293,7 +293,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
     #(197, False): check_return_value_exit_handler,
     #(42, True): pipe_entry_handler,
     ## (10, True): syscall_return_success_handler,
-    #(33, True): syscall_return_success_handler,
+    (33, True): generic_handlers.syscall_return_success_handler,
     (199, True): generic_handlers.syscall_return_success_handler,
     #(200, True): syscall_return_success_handler,
     (201, True): generic_handlers.syscall_return_success_handler,
