@@ -196,7 +196,10 @@ def main():
     # subprocess.call with shell=True is used, such that shell command formatting is
     # preserved. TODO: improve, if necessary.
     rr_create_record = ['rr', 'record', '-n', '-q', args.command]
-    subprocess.call(" ".join(rr_create_record), shell=True)
+    ret = subprocess.call(" ".join(rr_create_record), shell=True)
+    if ret != 0:
+      print('`rr record` failed [exit status: {}]'.format(ret))
+      sys.exit(ret)
 
     # retrieve latest trace through latest-trace linked file
     testname = os.path.realpath(consts.RR_TEST_CONFIG_PATH + "latest-trace")
