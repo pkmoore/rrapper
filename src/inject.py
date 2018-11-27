@@ -522,7 +522,7 @@ def main():
   apply_open_fds(rec_pid)
   apply_mmap_backing_files()
 
-	# create trace object
+  # create trace object
   pickle_file = consts.DEFAULT_CONFIG_PATH + "syscall_definitions.pickle"
   trace = Trace.Trace(config_dict['trace_file'], pickle_file)
   syscallreplay.syscalls = trace.syscalls
