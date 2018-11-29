@@ -350,7 +350,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
     #(260, True): timer_settime_entry_handler,
     #(261, True): timer_gettime_entry_handler,
     #(263, True): timer_delete_entry_handler,
-    #(265, True): clock_gettime_entry_handler,
+    (265, True): time_handlers.clock_gettime_entry_handler,
     #(271, True): syscall_return_success_handler,
     #(272, True): fadvise64_64_entry_handler,
     #(272, False): check_return_value_exit_handler,
