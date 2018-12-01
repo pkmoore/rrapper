@@ -266,26 +266,59 @@ def main():
     config.read(test_dir + "config.ini")
     testname = config.get("rr_recording", "rr_dir")
 
+    # create command set proper environmental variable
+    os.environ['RR_LOG'] = 'ReplaySession'
+    rr_config_replay = ['rr', 'replay', '-a', testname]
+
+    # execute replay command, this time to compare against trace. We write the
+    # ReplaySession output to replaysession.log
+    out_fd = open(test_dir + "replaysession.log", 'wb')
+    proc = subprocess.Popen(rr_config_replay, stdout=out_fd, stderr=out_fd)
+    while proc.poll() is None:
+      pass
+    out_fd.close()
+
     # open trace file for reading
     with open(test_dir + consts.STRACE_DEFAULT, 'r') as trace_file:
       trace_lines = trace_file.readlines()
+
+    # open log for reading
+    with open(test_dir + "replaysession.log", 'r') as test_log:
+      rr_lines = test_log.readlines()
+
+    # NOTE: there should be 2 * args.trace_line of lines in
+    # replaysession.log. Let's get rid of known offsets
+    for i, line in enumerate(rr_lines):
+
+      # get rid of STDOUT
+      if 'ReplaySession' not in line:
+        del rr_lines[i]
+
+      # get rid of INSTRUCTION_TRAP events
+      if 'INSTRUCTION_TRAP' in line:
+        del rr_lines[i]
+
+    # pop off EXIT line at end of log
+    del rr_lines[-1]
 
     # strip and breakdown pid
     pid = trace_lines[0].split()[0]
 
     if not args.event:
       # offset by -1 because line numbers start counting from 1
-      chosen_line = trace_lines[args.trace_line - 1 ]
+      chosen_line = trace_lines[args.trace_line - 1]
       if re.match(r'[0-9]+\s+\+\+\+\s+[0-9]+\s+\+\+\+', chosen_line):
         print('It seems like you have chosen a line containing an rr event '
               'number rather than a line containing a system call.  You '
               'must select a line containing a system call')
         sys.exit(1)
-      # We want the event JUST BEFORE our chosen system call so we must go
-      # back 2 lines from the chosen trace line
-      event_line = trace_lines[args.trace_line - 2 ]
 
-      user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
+      # grab ENTERING_SYSCALL state for event BEFORE chsoen syscall
+      event_line = rr_lines[(args.trace_line - 1) * 2]
+
+      # use capture group to grab event number
+      event_re = re.match(r'\[ReplaySession\] \[event (\w+)', event_line)
+      user_event = int(event_re.group(1))
 
     else:
       user_event = args.event
