@@ -20,7 +20,7 @@ RUN apt-get update && apt-get -y install \
 # Installing modified rr
 ########################
 
-RUN git clone -b ${RR_BRANCH} https://github.com/pkmoore/rr
+RUN git clone -b ${RR_BRANCH} https://github.com/alyptik/rr
 
 WORKDIR rr/
 
@@ -34,7 +34,7 @@ RUN MAKEFLAGS="-j$(nproc)" setarch i686 bash -c "mkdir obj && cd obj && cmake ..
 # Installing rrapper
 ########################
 
-RUN git clone -b ${RRAPPER_BRANCH} https://github.com/pkmoore/rrapper
+RUN git clone -b ${RRAPPER_BRANCH} https://github.com/alyptik/rrapper
 
 WORKDIR rrapper/
 
