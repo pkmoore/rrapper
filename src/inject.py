@@ -376,7 +376,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
     #(300, False): check_return_value_exit_handler,
     #(301, True): unlinkat_entry_handler,
     #(301, False): check_return_value_exit_handler,
-    (268, True): file_handlers.fchmodat_entry_handler,
+#    (268, True): file_handlers.fchmodat_entry_handler,
     # sys_faccessat
     (269, True): generic_handlers.syscall_return_success_handler,
     #(311, True): syscall_return_success_handler,
