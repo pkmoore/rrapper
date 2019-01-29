@@ -1,6 +1,7 @@
 from posix_omni_parser import Trace
 import sys
-from ..consts import DEFAULT_CONFIG_PATH
+
+DEFAULT_CONFIG_PATH = '~/.crashsim'
 
 class ReverseTimeMutator:
 
