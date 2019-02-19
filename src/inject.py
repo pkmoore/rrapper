@@ -83,61 +83,6 @@ def _kill_parent_process(pid):
 
 
 
-def handle_socketcall(syscall_id, syscall_object, entering, pid):
-  """
-  <Purpose>
-    Validate the subcall (NOT SYSCALL!) id of the socket subcall against
-    the subcall name we expect based on the current system call object.  Then,
-    hand off responsibility to the appropriate subcall handler.
-
-  <Returns>
-    None
-
-  """
-  subcall_handlers = {
-    ('socket', True): socket_handlers.socket_entry_handler,
-    #('socket', False): socket_exit_handler,
-    ('accept', True): socket_handlers.accept_subcall_entry_handler,
-    ('accept4', True): socket_handlers.accept_subcall_entry_handler,
-    #('accept', False): accept_subcall_entry_handler,
-    ('bind', True): socket_handlers.bind_entry_handler,
-    #('bind', False): bind_exit_handler,
-    ('listen', True): socket_handlers.listen_entry_handler,
-    #('listen', False): listen_exit_handler,
-    ('recv', True): recv_handlers.recv_subcall_entry_handler,
-    #('recvfrom', True): recvfrom_subcall_entry_handler,
-    ('setsockopt', True): socket_handlers.setsockopt_entry_handler,
-    ('send', True): send_handlers.send_entry_handler,
-    #('send', False): send_exit_handler,
-    ('connect', True): socket_handlers.connect_entry_handler,
-    #('connect', False): connect_exit_handler,
-    ('getsockopt', True): socket_handlers.getsockopt_entry_handler,
-    ## ('sendmmsg', True): sendmmsg_entry_handler,
-    #('sendto', True): sendto_entry_handler,
-    #('sendto', False): sendto_exit_handler,
-    ('shutdown', True): socket_handlers.shutdown_subcall_entry_handler,
-    #('recvmsg', True): recvmsg_entry_handler,
-    #('recvmsg', False): recvmsg_exit_handler,
-    ('getsockname', True): socket_handlers.getsockname_entry_handler,
-    ('getpeername', True): socket_handlers.getpeername_entry_handler
-  }
-  # The subcall id of the socket subcall is located in the EBX register
-  # according to our Linux's convention.
-  subcall_id = syscallreplay.peek_register(pid, syscallreplay.EBX)
-  util.validate_subcall(subcall_id, syscall_object)
-  try:
-    subcall_handlers[(syscall_object.name, entering)](syscall_id,
-                                                      syscall_object,
-                                                      pid)
-  except KeyError:
-    raise NotImplementedError('No handler for socket subcall %s %s',
-                              syscall_object.name,
-                              'entry' if entering else 'exit')
-
-
-
-
-
 def debug_handle_syscall(pid, syscall_id, syscall_object, entering):
   """
   <Purpose>
@@ -177,26 +122,12 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
     Validate the id of the system call against the name of the system call
     we are expecting based on the current system call object.  Then hand off
     responsiblity to the appropriate subcall handler.
-    TODO: cosmetic - Reorder handler entrys numerically.
 
   <Returns>
     None
   """
 
   logging.debug('Handling syscall')
-
-  # If we are entering a system call, update the number of system calls we
-  # have handled
-  # System call id 102 corresponds to 'socket subcall'.  This system call is
-  # the entry point for code calls the appropriate socketf code based on the
-  # subcall id in EBX.
-  if syscall_id == 102:
-    ## Hand off to code that deals with socket calls and return once that is
-    ## complete.  Exceptions will be thrown if something is unsuccessful
-    ## that end.  Return immediately after because we don't want our system
-    ## call handler code double-handling the already handled socket subcall
-    handle_socketcall(syscall_id, syscall_object, entering, pid)
-    return
 
   forgers = {
     13: time_handlers.time_forger,
