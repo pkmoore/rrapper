@@ -90,3 +90,38 @@ class TestFindSyscallBetweenIndexes(unittest.TestCase):
                                                   end,
                                                   pred_func)
     self.assertEqual(result, [0])
+
+
+class TestFindOpenSpansForFile(unittest.TestCase):
+  def test_open_case(self):
+    open_call = Bunch()
+    open_call.name = 'open'
+    open_call.args = [Bunch()]
+    open_call.args[0].value = '"test.txt"'
+    open_call.ret = [3]
+    close_call = Bunch()
+    close_call.name = 'close'
+    close_call.args = [Bunch()]
+    close_call.args[0].value = 3
+    extra_call = Bunch()
+    extra_call.name = 'shouldbeskipped'
+    syscalls = [open_call, extra_call, extra_call, extra_call, close_call]
+    mutator = GenericMutator()
+    mutator.find_open_spans_for_file(syscalls, 'test.txt')
+
+
+  def test_openat_case(self):
+    open_call = Bunch()
+    open_call.name = 'openat'
+    open_call.args = [Bunch(), Bunch()]
+    open_call.args[1].value = '"test.txt"'
+    open_call.ret = [3]
+    close_call = Bunch()
+    close_call.name = 'close'
+    close_call.args = [Bunch()]
+    close_call.args[0].value = 3
+    extra_call = Bunch()
+    extra_call.name = 'shouldbeskipped'
+    syscalls = [open_call, extra_call, extra_call, extra_call, close_call]
+    mutator = GenericMutator()
+    mutator.find_open_spans_for_file(syscalls, 'test.txt')
