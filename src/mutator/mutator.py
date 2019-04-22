@@ -27,6 +27,35 @@ class GenericMutator:
 
     return indexes
 
+  def find_open_spans_for_file(self, syscalls, filename):
+    searching_for = 'open'
+    start = -1
+    current_fd = -1
+    spans = []
+    for index, v in enumerate(syscalls):
+      if searching_for == 'open':
+        if self._is_open_or_openat_for_file(v, filename):
+          start = index
+          current_fd = v.ret[0]
+          searching_for = 'close'
+      if searching_for == 'close':
+        if v.name.startswith('close') and int(v.args[0].value) == current_fd:
+          spans.append((start, index))
+          start = -1
+          current_fd = -1
+          searching_for = 'open'
+    return spans
+
+  def _is_open_or_openat_for_file(self, syscall, filename):
+    if syscall.name == 'open':
+      if syscall.args[0].value.strip('"') == filename:
+        return True
+    if syscall.name == 'openat':
+      if syscall.args[1].value.strip('"') == filename:
+        return True
+    return False
+
+
 class Stat64FiletypeMutator:
   def __init__(self, filename, filetype):
     self.filename = filename
