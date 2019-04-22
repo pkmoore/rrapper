@@ -15,7 +15,7 @@ class TestFindSyscallBetweenIndexes(unittest.TestCase):
     syscalls = Bunch()
     start = -1
     end = 10
-    pred_func = lambda x: False
+    pred_func = lambda x, y: False
     mutator = GenericMutator()
     self.assertRaises(ValueError,
                       mutator.find_syscall_between_indexes, syscalls,
@@ -54,7 +54,7 @@ class TestFindSyscallBetweenIndexes(unittest.TestCase):
     syscalls = [Bunch(), Bunch()]
     start = 0
     end = 3
-    pred_func = lambda x: False
+    pred_func = lambda x, y: False
     mutator = GenericMutator()
     self.assertRaises(ValueError,
                       mutator.find_syscall_between_indexes, syscalls,
@@ -83,7 +83,7 @@ class TestFindSyscallBetweenIndexes(unittest.TestCase):
     syscalls = [fake_statcall]
     start = 0
     end = 1
-    pred_func = lambda x: x.name.startswith('stat')
+    pred_func = lambda x, y: x.name.startswith('stat')
     mutator = GenericMutator()
     result = mutator.find_syscall_between_indexes(syscalls,
                                                   start,
