@@ -232,8 +232,9 @@ def process_messages(subjects):
         json.dump(tmp, d)
 
       # initiate injector with state file as argument
-      s['handle'] = subprocess.Popen(['inject','--verbosity=40',
-                                     s['injected_state_file']])
+      s['handle'] = subprocess.Popen(['inject',
+                                      '--verbosity=40',
+                                      s['injected_state_file']])
       subjects_injected += 1
 
     elif inject == 'DONT_INJECT':
