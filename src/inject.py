@@ -52,7 +52,7 @@ from mutator.UnusualFiletype import UnusualFiletypeMutator
 from mutator.ReverseTime import ReverseTimeMutator
 from mutator.CrossdiskRename import CrossdiskRenameMutator
 
-logging.basicConfig(stream=sys.stderr, level=4)
+logger = logging.getLogger('root')
 
 
 def _kill_parent_process(pid):
@@ -71,7 +71,7 @@ def _kill_parent_process(pid):
     if proc_str[0] == 'Tgid:':
       tgid = int(proc_str[1])
   if tgid != pid:
-    logging.debug('Got differing tgid {}, killing group'
+    logger.debug('Got differing tgid {}, killing group'
                   .format(tgid))
     os.kill(tgid, signal.SIGKILL)
   else:
@@ -164,7 +164,7 @@ def debug_handle_syscall(pid, syscall_id, syscall_object, entering):
     if syscall_id in debug_printers.keys():
       debug_printers[syscall_id](pid, syscall_id, syscall_object)
     else:
-      logging.debug('No debug printer associated with syscall_id')
+      logger.debug('No debug printer associated with syscall_id')
     raise
 
 
@@ -183,7 +183,7 @@ def handle_syscall(pid, syscall_id, syscall_object, entering):
     None
   """
 
-  logging.debug('Handling syscall')
+  logger.debug('Handling syscall')
 
   # If we are entering a system call, update the number of system calls we
   # have handled
@@ -511,7 +511,7 @@ def main():
   args = parser.parse_args()
 
   # Add simple logging for verbosity
-  logging.basicConfig(level=args.loglevel)
+  logger.setLevel(40)
 
   # Sets up syscallreplay.injected_state['config']
   config = "".join(args.config)
@@ -548,23 +548,23 @@ def main():
   # Requires kernel.yama.ptrace_scope = 0
   # in /etc/sysctl.d/10-ptrace.conf
   # on modern Ubuntu
-  logging.debug('Injecting %d', pid)
+  logger.debug('Injecting %d', pid)
   syscallreplay.attach(pid)
   _, status = os.waitpid(pid, 0)
-  logging.debug('Attached %d', pid)
+  logger.debug('Attached %d', pid)
 
-  logging.debug('Requesting stop at next system call entry using SIGCONT')
+  logger.debug('Requesting stop at next system call entry using SIGCONT')
   syscallreplay.syscall(pid, signal.SIGCONT)
   _, status = os.waitpid(pid, 0)
 
   # We need an additional call to PTRACE_SYSCALL here in order to skip
   # past an rr syscall buffering related injected system call
-  logging.debug('Second sigcont %d', pid)
+  logger.debug('Second sigcont %d', pid)
   syscallreplay.syscall(pid, 0)
   _, status = os.waitpid(pid, 0)
 
   # main system call handling loop
-  logging.debug('Entering system call handling loop')
+  logger.debug('Entering system call handling loop')
   syscallreplay.entering_syscall = True
   while not os.WIFEXITED(status):
     syscall_object = syscallreplay.syscalls[syscallreplay.syscall_index]
