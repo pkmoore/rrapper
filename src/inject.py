@@ -503,15 +503,15 @@ def main():
                       help="path to configuration file")
   parser.add_argument('-v', '--verbosity',
                       dest='loglevel',
-                      action='store_const',
-                      const=logging.DEBUG,
+                      type=int,
+                      default=40,
                       help='flag for displaying debug information')
 
   # parser arguments
   args = parser.parse_args()
 
   # Add simple logging for verbosity
-  logger.setLevel(40)
+  logger.setLevel(level = args.loglevel)
 
   # Sets up syscallreplay.injected_state['config']
   config = "".join(args.config)
