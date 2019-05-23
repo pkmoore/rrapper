@@ -138,6 +138,12 @@ def get_configuration(ini_path):
     except ConfigParser.NoOptionError:
       pass
 
+    # log level for a given section is also optional
+    try:
+      s['loglevel'] = cfg.get(i, 'loglevel')
+    except ConfigParser.NoOptionError:
+      pass
+
     # append subject to lsit
     logging.debug("Subject parsed: {}".format(s))
     subjects.append(s)
@@ -233,7 +239,7 @@ def process_messages(subjects):
 
       # initiate injector with state file as argument
       s['handle'] = subprocess.Popen(['inject',
-                                      '--verbosity=40',
+                                      '--verbosity='+s['loglevel'],
                                       s['injected_state_file']])
       subjects_injected += 1
 
