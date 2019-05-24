@@ -512,6 +512,8 @@ def main():
 
   # Add simple logging for verbosity
   logger.setLevel(level = args.loglevel)
+  if int(args.loglevel) == 10:
+    syscallreplay.enable_debug_output(10)
 
   # Sets up syscallreplay.injected_state['config']
   config = "".join(args.config)
