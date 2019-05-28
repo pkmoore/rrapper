@@ -715,15 +715,6 @@ def main():
   syscallreplay.syscall(pid, 0)
   _, status = os.waitpid(pid, 0)
 
-  if syscallreplay.peek_register(pid, syscallreplay.ORIG_RAX) == 0:
-      logging.debug('Skip restart_syscall entry %d', pid)
-      syscallreplay.syscall(pid, 0)
-      _, status = os.waitpid(pid, 0)
-
-      logging.debug('Skip restart_syscall exit %d', pid)
-      syscallreplay.syscall(pid, 0)
-      _, status = os.waitpid(pid, 0)
-
   # main system call handling loop
   logger.debug('Entering system call handling loop')
   syscallreplay.entering_syscall = True
