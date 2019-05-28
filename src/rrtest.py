@@ -225,6 +225,7 @@ def main():
     config.set("request_handling_process", "trace_file", test_dir + consts.STRACE_DEFAULT)
     config.set("request_handling_process", "trace_start", 0)
     config.set("request_handling_process", "trace_end", 0)
+    config.set("request_handling_process", "loglevel", 40)
 
     # write config file
     with open(test_dir + "config.ini", 'wb') as config_file:
