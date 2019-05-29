@@ -34,6 +34,7 @@ import errno
 import ConfigParser
 
 from posix_omni_parser import Trace
+from mutator.CrossdiskRename import CrossdiskRenameMutator
 from checker.checker import NullChecker
 
 import consts
@@ -221,7 +222,6 @@ def main():
     config.set("request_handling_process", "trace_file", test_dir + consts.STRACE_DEFAULT)
     config.set("request_handling_process", "trace_start", 0)
     config.set("request_handling_process", "trace_end", 0)
-    config.set("request_handling_process", "loglevel", 40)
 
     # write config file
     with open(test_dir + "config.ini", 'wb') as config_file:
@@ -249,7 +249,7 @@ def main():
   elif args.cmd == 'configure':
 
     # check for mandatory arguments
-    man_options = ['name', 'trace_line']
+    man_options = ['name']  #man_options = ['name', 'trace_line']
     for opt in man_options:
       if not args.__dict__[opt]:
         parser.print_help()
@@ -274,9 +274,18 @@ def main():
     # strip and breakdown pid
     pid = trace_lines[0].split()[0]
 
+    if args.mutator:
+      identify_mutator = eval(args.mutator)
+      lines = identify_mutator.identify_lines(test_dir + consts.STRACE_DEFAULT)
+      print(lines)
+      chosen_line = trace_lines[(lines[0] * 2)]            #Needs to be modified 
+      print(chosen_line)
+      config.set("request_handling_process", "mutator", args.mutator)
+
     if not args.event:
       # offset by -1 because line numbers start counting from 1
-      chosen_line = trace_lines[args.trace_line - 1 ]
+      if chosen_line == None:
+        chosen_line = trace_lines[args.trace_line - 1 ]
       if re.match(r'[0-9]+\s+\+\+\+\s+[0-9]+\s+\+\+\+', chosen_line):
         print('It seems like you have chosen a line containing an rr event '
               'number rather than a line containing a system call.  You '
@@ -284,7 +293,7 @@ def main():
         sys.exit(1)
       # We want the event JUST BEFORE our chosen system call so we must go
       # back 2 lines from the chosen trace line
-      event_line = trace_lines[args.trace_line - 2 ]
+      event_line = trace_lines[(lines[0] * 2) - 1]
 
       user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
 
@@ -300,9 +309,7 @@ def main():
         except IndexError:
           break
 
-    # update changes in config.ini
-    if args.mutator:
-      config.set("request_handling_process", "mutator", args.mutator)
+
     config.set("request_handling_process", "trace_file", test_dir + "trace_snip.strace")
     config.set("request_handling_process", "event", user_event)
     config.set("request_handling_process", "pid", pid)
