@@ -3,6 +3,7 @@
 """ Tests for inject.py
 """
 
+import os
 import unittest
 import mock
 from bunch import Bunch
@@ -150,12 +151,15 @@ class TestDebugHandleSyscall(unittest.TestCase):
                                        entering)
 
     @mock.patch('inject.handle_syscall')
-    @mock.patch('syscallreplay.file_handlers.open_entry_debug_printer')
-    def test_handle_replay_delta_error(self, mock_printer, mock_handle):
+    @mock.patch('inject.arch_get_debug_printers')
+    def test_handle_replay_delta_error_x86(self, mock_printers, mock_handle):
+        os.putenv('CRASHSIM_ARCH', 'x86')
         pid = 555
         syscall_id = 5
         entering = True
         syscall_object = Bunch()
+        fake_debug_printer = mock.Mock()
+        mock_printers.return_value = {5: fake_debug_printer}
         mock_handle.side_effect = ReplayDeltaError('A test error')
         self.assertRaises(ReplayDeltaError,
                           debug_handle_syscall,
@@ -163,4 +167,24 @@ class TestDebugHandleSyscall(unittest.TestCase):
                           syscall_id,
                           syscall_object,
                           entering)
-        mock_printer.assert_called_with(pid, syscall_id, syscall_object)
+        fake_debug_printer.assert_called_with(pid, syscall_id, syscall_object)
+
+
+    @mock.patch('inject.handle_syscall')
+    @mock.patch('inject.arch_get_debug_printers')
+    def test_handle_replay_delta_error_x86_64(self, mock_printers, mock_handle):
+        os.putenv('CRASHSIM_ARCH', 'x86_64')
+        pid = 555
+        syscall_id = 2
+        entering = True
+        syscall_object = Bunch()
+        mock_handle.side_effect = ReplayDeltaError('A test error')
+        fake_debug_printer = mock.Mock()
+        mock_printers.return_value = {2: fake_debug_printer}
+        self.assertRaises(ReplayDeltaError,
+                          debug_handle_syscall,
+                          pid,
+                          syscall_id,
+                          syscall_object,
+                          entering)
+        fake_debug_printer.assert_called_with(pid, syscall_id, syscall_object)
