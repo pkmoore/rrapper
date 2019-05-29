@@ -94,6 +94,16 @@ $ python setup.py install
 $ pip install -r requirements.txt
 ```
 
+### Ensuring Your Installation Works
+
+There are a few actions you can take to ensure you have installed the tool
+correctly.
+
+First, run ```rrinit``` to check your environment.  This will ensure the options
+mentioned at the top of this file have been configured correctly.
+
+Second, run ```nosetests``` to run the unit tests that ship with rrapper.
+
 ## 4.0 Components
 
 This repository comprises of several modules that work together sequentially in order to produce a trace,
