@@ -136,7 +136,6 @@ def main():
   configure_group.add_argument('-e', '--event',
                                dest='event',
                                help='event number')
-
   configure_group.add_argument('-m', '--mutator',
                                dest='mutator',
                                help='mutator to use')
@@ -247,12 +246,24 @@ def main():
     sys.exit(0)
 
   elif args.cmd == 'configure':
-
-    # check for mandatory arguments
-    man_options = ['name']  #man_options = ['name', 'trace_line']
+    # The configure command requires a name be specified
+    man_options = ['name']
     for opt in man_options:
       if not args.__dict__[opt]:
         parser.print_help()
+        sys.exit(1)
+
+    # if we specify a mutator, we cannot specify an event or traceline
+    if args.mutator and (args.event or args.trace_line):
+        configure_group.print_help()
+        print("You must not specifiy an event number or trace line "
+              " when you have specified a mutator.")
+        sys.exit(1)
+
+    if args.event or args.trace_line:
+      if not (args.event and args.trace_line):
+        configure_group.print_help()
+        print("An event and trace line must be specified together")
         sys.exit(1)
 
     # check if config file exists
