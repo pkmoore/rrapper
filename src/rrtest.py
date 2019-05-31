@@ -119,7 +119,7 @@ def main():
                             dest='force',
                             help='force overwrite creation of the test')
 
-  # ./rrtest configure -n testname -e EVENT_NUM
+  # ./rrtest configure -n testname
   configure_group.set_defaults(cmd='configure')
   configure_group.add_argument('-n', '--name',
                                dest='name',
@@ -133,9 +133,6 @@ def main():
                                default=5,
                                type=int,
                                help='number of lines to create a strace snippet')
-  configure_group.add_argument('-e', '--event',
-                               dest='event',
-                               help='event number')
   configure_group.add_argument('-m', '--mutator',
                                dest='mutator',
                                help='mutator to use')
@@ -253,17 +250,10 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    # if we specify a mutator, we cannot specify an event or traceline
-    if args.mutator and (args.event or args.trace_line):
+    # if we specify a mutator, we cannot specify a traceline
+    if args.mutator and args.trace_line:
         configure_group.print_help()
-        print("You must not specifiy an event number or trace line "
-              " when you have specified a mutator.")
-        sys.exit(1)
-
-    if args.event or args.trace_line:
-      if not (args.event and args.trace_line):
-        configure_group.print_help()
-        print("An event and trace line must be specified together")
+        print("You must not specifiy a trace line when you have specified a mutator.")
         sys.exit(1)
 
     # check if config file exists
@@ -286,37 +276,47 @@ def main():
     pid = trace_lines[0].split()[0]
 
     if args.mutator:
+      config.set("request_handling_process", "mutator", args.mutator)
+      # use the mutator to identify the line we are interested in
       identify_mutator = eval(args.mutator)
       lines = identify_mutator.identify_lines(test_dir + consts.STRACE_DEFAULT)
-      print(lines)
-      chosen_line = trace_lines[(lines[0] * 2)]            #Needs to be modified 
-      print(chosen_line)
-      config.set("request_handling_process", "mutator", args.mutator)
+      identified_syscall_list_index = lines[0]
 
-    if not args.event:
+      # we must multiply by 2 here because the mutator is looking at a list
+      # of parsed system call objects NOT the trace file itself.  This means
+      # index A in the list of system calls corresponds with line number (A * 2)
+      # in the trace file because including the rr event lines (which, again,
+      # are NOT present in the list of system call objects) DOUBLES the number
+      # of lines in the file
+      identified_trace_file_index = identified_syscall_list_index * 2
+      identified_trace_line = trace_lines[identified_trace_file_index]
+
+    if args.trace_line:
       # offset by -1 because line numbers start counting from 1
-      if chosen_line == None:
-        chosen_line = trace_lines[args.trace_line - 1 ]
-      if re.match(r'[0-9]+\s+\+\+\+\s+[0-9]+\s+\+\+\+', chosen_line):
+      identified_trace_file_index = int(args.trace_line - 1)
+      identified_trace_line = trace_lines[identified_trace_file_index]
+      if re.match(r'[0-9]+\s+\+\+\+\s+[0-9]+\s+\+\+\+',
+                  identified_trace_file_line):
         print('It seems like you have chosen a line containing an rr event '
               'number rather than a line containing a system call.  You '
               'must select a line containing a system call')
         sys.exit(1)
       # We want the event JUST BEFORE our chosen system call so we must go
       # back 2 lines from the chosen trace line
-      event_line = trace_lines[(lines[0] * 2) - 1]
 
-      user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
 
-    else:
-      user_event = args.event
+    event_line = trace_lines[(identified_trace_file_index) - 1]
+    user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
 
-    # create a new strace snippet, with the event as the first line
+    # now we must generate a new trace snippet that will be used to drive the test.
+    # This snip will be sniplen (default 5) system calls in length and will have
+    # the rr event number lines from the main recording STRIPPED OUT.
+    lines_written = 0
     with open(test_dir + "trace_snip.strace", 'wb') as snip_file:
-      # write a 5 line snippet file by default
       for i in range(0, args.sniplen * 2, 2):
         try:
-          snip_file.write(trace_lines[args.trace_line - 1 + i])
+          snip_file.write(trace_lines[identified_trace_file_index + i])
+          lines_written += 1
         except IndexError:
           break
 
@@ -324,7 +324,7 @@ def main():
     config.set("request_handling_process", "trace_file", test_dir + "trace_snip.strace")
     config.set("request_handling_process", "event", user_event)
     config.set("request_handling_process", "pid", pid)
-    config.set("request_handling_process", "trace_end", args.sniplen)
+    config.set("request_handling_process", "trace_end", lines_written)
 
     # write final changes to config file
     with open(test_dir + "config.ini", 'w+') as config_file:
