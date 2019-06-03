@@ -10,5 +10,5 @@ we can see whether or not an application responds to this sitaution.
 
 This anomaly can be injected manually or with a command line similar to:
 ```
-rrtest configure --name=closetest --traceline=65 --event 140 --mutator="CloseInterruptedMutator()"
+rrtest configure --name=closetest --event 140 --mutator="CloseInterruptedMutator()"
 ```

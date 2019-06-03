@@ -30,5 +30,5 @@ Possible values and their usual result:
 
 This anomaly can be injected manually or with a command line similar to:
 ```
-rrtest configure --event 714 --name aspell --traceline 352 --mutator='UnusualFiletypeMutator("S_IFBLK")'
+rrtest configure --name aspell --traceline 352 --mutator='UnusualFiletypeMutator("S_IFBLK")'
 ```

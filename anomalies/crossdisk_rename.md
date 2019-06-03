@@ -10,5 +10,5 @@ application responds to this sitaution.
 
 This anomaly can be injected manually or with a command line similar to:
 ```
-rrtest configure --name=renametest --traceline=65 --event 140 --mutator="CrossdiskRenameMutator()"
+rrtest configure --name=renametest --traceline=65  --mutator="CrossdiskRenameMutator()"
 ```
