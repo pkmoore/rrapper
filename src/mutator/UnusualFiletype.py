@@ -45,4 +45,24 @@ class UnusualFiletypeMutator:
             continue
         return k
 
+   def identify_lines(self,trace):
+    lines = []
+    with open(trace, 'r') as f:
+      string_lines = f.readlines()
+    syscalls = Trace.Trace(trace, DEFAULT_CONFIG_PATH + 'syscall_definitions.pickle').syscalls
+    for k, v in enumerate(syscalls):
+      # fstat takes a file descriptor
+      if v.name.startswith('fstat'):
+        if self.file_descriptor:
+          if self.file_descriptor != v.args[0].value:
+            continue
+        lines.append(k)
+      # stat and lstat take a name rather than a file descriptor
+      if v.name.startswith('stat') or v.name.startswith('lstat'):
+        if self.name:
+          if self.name != v.args[0].value:
+            continue
+        lines.append(k)
+    return lines
+
 
