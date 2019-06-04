@@ -36,9 +36,27 @@ $ echo kernel.yama.ptrace_scope = 0 | sudo tee /etc/sysctl.d/10-ptrace.conf
 
 ```
 $ echo -1 | sudo tee /proc/sys/kernel/perf_event_paranoid
+
+
 ```
+
+* Hardware Performance Counters
+
+```
+For VMWare Fusion:
+Virtual Machine Menu -> Settings -> Processors and Memory -> Advanced Options
+-> tick "Enable Code Profiling Applications in this Virtual Machine"
+
+```
+
+```
+Other Setups:
+You must configure your system or virtualization setup to allow access to hardware performance counters.
+KVM allows this for Linux Hosts
+Virtual Box DOES NOT support virtualized performance counters.
+```
+
 **Note that some of these settings can be reverted upon system restart.**
-**Also note, if you are using a VMWare guest, you must enable virtualized hardware performance counters in your guest's settings**
 
 * An installed and working copy of our modified version of rr located [here](https://github.com/pkmoore/rr/)
 
@@ -51,6 +69,7 @@ Other dependencies that may need to be installed using your Linux distribution's
 * zlib
 
 ## 3.0 Installation
+
 
 ### Automated Installation _(with Docker)_
 
@@ -93,6 +112,16 @@ Install CrashSimulator's dependencies
 $ python setup.py install
 $ pip install -r requirements.txt
 ```
+
+### Ensuring Your Installation Works
+
+There are a few actions you can take to ensure you have installed the tool
+correctly.
+
+First, run ```rrinit``` to check your environment.  This will ensure the options
+mentioned at the top of this file have been configured correctly.
+
+Second, run ```nosetests``` to run the unit tests that ship with rrapper.
 
 ## 4.0 Components
 

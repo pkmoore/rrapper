@@ -25,7 +25,7 @@ be done manually or with the ReverseTimeMutator with a command line similar
 to:
 
 ```
-rrtest configure --name=gtodtest --traceline=65 --event=140 --sniplen=7 --mutator="ReverseTimeMutator(1000)"
+rrtest configure --name=gtodtest --traceline=65 --sniplen=7 --mutator="ReverseTimeMutator(1000)"
 ```
 
 
