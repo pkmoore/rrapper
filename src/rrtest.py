@@ -35,6 +35,7 @@ import ConfigParser
 
 from posix_omni_parser import Trace
 from mutator.CrossdiskRename import CrossdiskRenameMutator
+from mutator.FutureTime import FutureTimeMutator
 from checker.checker import NullChecker
 
 import consts
