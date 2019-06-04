@@ -212,13 +212,6 @@ def main():
     config.add_section("rr_recording")
     config.set("rr_recording", "rr_dir", test_dir)
 
-    config.add_section("request_handling_process")
-    config.set("request_handling_process", "event", None)
-    config.set("request_handling_process", "pid", None)
-    config.set("request_handling_process", "trace_file", test_dir + consts.STRACE_DEFAULT)
-    config.set("request_handling_process", "trace_start", 0)
-    config.set("request_handling_process", "trace_end", 0)
-
     # write config file
     with open(test_dir + "config.ini", 'wb') as config_file:
       config.write(config_file)
@@ -272,65 +265,98 @@ def main():
     with open(test_dir + consts.STRACE_DEFAULT, 'r') as trace_file:
       trace_lines = trace_file.readlines()
 
-    # strip and breakdown pid
+   # strip and breakdown pid
     pid = trace_lines[0].split()[0]
 
     if args.mutator:
-      config.set("request_handling_process", "mutator", args.mutator)
+      #config.set("request_handling_process", "mutator", args.mutator)
       # use the mutator to identify the line we are interested in
       identify_mutator = eval(args.mutator)
       lines = identify_mutator.identify_lines(test_dir + consts.STRACE_DEFAULT)
-      identified_syscall_list_index = lines[0]
+      lines_count = len(lines)
+      for j in range(lines_count):
+        config.add_section("request_handling_process"+str(j))
+        config.set("request_handling_process"+str(j), "event", None)
+        config.set("request_handling_process"+str(j), "pid", None)
+        config.set("request_handling_process"+str(j), "trace_file", test_dir + consts.STRACE_DEFAULT)
+        config.set("request_handling_process"+str(j), "trace_start", 0)
+        config.set("request_handling_process"+str(j), "trace_end", 0)
 
-      # we must multiply by 2 here because the mutator is looking at a list
-      # of parsed system call objects NOT the trace file itself.  This means
-      # index A in the list of system calls corresponds with line number (A * 2)
-      # in the trace file because including the rr event lines (which, again,
-      # are NOT present in the list of system call objects) DOUBLES the number
-      # of lines in the file
-      identified_trace_file_index = identified_syscall_list_index * 2
-      identified_trace_line = trace_lines[identified_trace_file_index]
+        identified_syscall_list_index = lines[j]
+
+        config.set("request_handling_process"+str(j), "mutator", args.mutator)
+        # we must multiply by 2 here because the mutator is looking at a list
+        # of parsed system call objects NOT the trace file itself.  This means
+        # index A in the list of system calls corresponds with line number (A * 2)
+        # in the trace file because including the rr event lines (which, again,
+        # are NOT present in the list of system call objects) DOUBLES the number
+        # of lines in the file
+        identified_trace_file_index = identified_syscall_list_index * 2
+        identified_trace_line = trace_lines[identified_trace_file_index]
+
+
+        event_line = trace_lines[(identified_trace_file_index) - 1]
+        user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
+        # now we must generate a new trace snippet that will be used to drive the test.
+        # This snip will be sniplen (default 5) system calls in length and will have
+        # the rr event number lines from the main recording STRIPPED OUT.
+        lines_written = 0
+        with open(test_dir + "trace_snip"+str(j)+".strace", 'wb') as snip_file:
+          for i in range(0, args.sniplen * 2, 2):
+            try:
+              snip_file.write(trace_lines[identified_trace_file_index + i])
+              lines_written += 1
+            except IndexError:
+              break
+        config.set("request_handling_process"+str(j), "trace_file", test_dir + "trace_snip"+str(j)+".strace")
+        config.set("request_handling_process"+str(j), "event", user_event)
+        config.set("request_handling_process"+str(j), "pid", pid)
+        config.set("request_handling_process"+str(j), "trace_end", lines_written)
+
+        # write final changes to config file
+        with open(test_dir + "config.ini", 'w+') as config_file:
+          config.write(config_file)
+      sys.exit(0)
 
     if args.trace_line:
       # offset by -1 because line numbers start counting from 1
+      config.add_section("request_handling_process")
+      config.set("request_handling_process", "event", None)
+      config.set("request_handling_process", "pid", None)
+      config.set("request_handling_process", "trace_file", test_dir + consts.STRACE_DEFAULT)
+      config.set("request_handling_process", "trace_start", 0)
+      config.set("request_handling_process", "trace_end", 0)
+
       identified_trace_file_index = int(args.trace_line - 1)
       identified_trace_line = trace_lines[identified_trace_file_index]
-      if re.match(r'[0-9]+\s+\+\+\+\s+[0-9]+\s+\+\+\+',
-                  identified_trace_file_line):
+      if re.match(r'[0-9]+\s+\+\+\+\s+[0-9]+\s+\+\+\+', identified_trace_line):
         print('It seems like you have chosen a line containing an rr event '
               'number rather than a line containing a system call.  You '
               'must select a line containing a system call')
         sys.exit(1)
-      # We want the event JUST BEFORE our chosen system call so we must go
-      # back 2 lines from the chosen trace line
 
+      event_line = trace_lines[(identified_trace_file_index) - 1]
+      user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
 
-    event_line = trace_lines[(identified_trace_file_index) - 1]
-    user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
+      lines_written = 0
+      with open(test_dir + "trace_snip.strace", 'wb') as snip_file:
+        for i in range(0, args.sniplen * 2, 2):
+          try:
+            snip_file.write(trace_lines[identified_trace_file_index + i])
+            lines_written += 1
+          except IndexError:
+            break
 
-    # now we must generate a new trace snippet that will be used to drive the test.
-    # This snip will be sniplen (default 5) system calls in length and will have
-    # the rr event number lines from the main recording STRIPPED OUT.
-    lines_written = 0
-    with open(test_dir + "trace_snip.strace", 'wb') as snip_file:
-      for i in range(0, args.sniplen * 2, 2):
-        try:
-          snip_file.write(trace_lines[identified_trace_file_index + i])
-          lines_written += 1
-        except IndexError:
-          break
-
-
-    config.set("request_handling_process", "trace_file", test_dir + "trace_snip.strace")
-    config.set("request_handling_process", "event", user_event)
-    config.set("request_handling_process", "pid", pid)
-    config.set("request_handling_process", "trace_end", lines_written)
-
-    # write final changes to config file
-    with open(test_dir + "config.ini", 'w+') as config_file:
-      config.write(config_file)
-
-    sys.exit(0)
+      config.set("request_handling_process", "trace_file", test_dir + "trace_snip.strace")
+      config.set("request_handling_process", "event", user_event)
+      config.set("request_handling_process", "pid", pid)
+      config.set("request_handling_process", "trace_end", lines_written)
+              # write final changes to config file
+      with open(test_dir + "config.ini", 'w+') as config_file:
+        config.write(config_file)
+    # We want the event JUST BEFORE our chosen system call so we must go
+    # back 2 lines from the chosen trace line
+      sys.exit(0)
 
   elif args.cmd == "list":
 
