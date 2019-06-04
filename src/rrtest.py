@@ -35,6 +35,7 @@ import ConfigParser
 
 from posix_omni_parser import Trace
 from mutator.CrossdiskRename import CrossdiskRenameMutator
+from mutator.FutureTime import FutureTimeMutator
 from checker.checker import NullChecker
 
 import consts
@@ -206,6 +207,14 @@ def main():
 
     # copy rr produced strace into our own directory
     rr_copy(consts.STRACE_DEFAULT, test_dir + consts.STRACE_DEFAULT)
+
+    # remove the exit call and the counter for the exit call
+    fh = open(test_dir + consts.STRACE_DEFAULT, "r+")
+    lines = fh.readlines()
+    lines = lines[:-2]
+    lines[-1] = lines[-1][:-1] # removse the \n from the end of last line
+    fh.writelines(lines)
+    fh.close()
 
     # create INI config file
     config = ConfigParser.ConfigParser()
