@@ -214,7 +214,7 @@ def main():
     lines = lines[:-2]
     lines[-1] = lines[-1][:-1] # removse the \n from the end of last line
     fh.writelines(lines)
-    fh.close
+    fh.close()
 
     # create INI config file
     config = ConfigParser.ConfigParser()
