@@ -34,6 +34,7 @@ import argparse
 import consts
 import syscallreplay.util as util
 
+logger = logging.getLogger('root')
 
 # pylint: disable=global-statement
 rrdump_pipe = None
@@ -87,11 +88,11 @@ def get_configuration(ini_path):
   """
 
   # instantiate new SafeConfigParser, read path to config
-  logging.debug("Begin parsing INI configuration file")
+  logger.debug("Begin parsing INI configuration file")
   cfg = ConfigParser.SafeConfigParser()
 
   # discovering INI path
-  logging.debug("Reading configuration file")
+  logger.debug("Reading configuration file")
   found = cfg.read(ini_path)
   if ini_path not in found:
     raise IOError('INI configuration could not be read: {}'
@@ -103,13 +104,13 @@ def get_configuration(ini_path):
 
   # set rr_dir as specified key-value pair in config, cut out first element
   # in list
-  logging.debug("Discovering replay directory")
+  logger.debug("Discovering replay directory")
   rr_dir_section = sections[0]
   rr_dir = cfg.get(rr_dir_section, 'rr_dir')
   sections = sections[1:]
 
   # for each following item
-  logging.debug("Parsing INI configuration")
+  logger.debug("Parsing INI configuration")
   for i in sections:
     s = {}
     s['event'] = cfg.get(i, 'event')
@@ -139,7 +140,7 @@ def get_configuration(ini_path):
       pass
 
     # append subject to lsit
-    logging.debug("Subject parsed: {}".format(s))
+    logger.debug("Subject parsed: {}".format(s))
     subjects.append(s)
 
   return rr_dir, subjects
@@ -166,13 +167,13 @@ def execute_rr(rr_dir, subjects):
   events_str = ''
   for i in subjects:
     events_str += i['rec_pid'] + ':' + i['event'] + ','
-  logging.debug("Event string: {}".format(events_str))
+  logger.debug("Event string: {}".format(events_str))
 
   # retrieve environmental variables
   my_env = os.environ.copy()
 
   # execute rr with spin-off switch.  Output tossed into proc.out
-  logging.debug("Executing replay command and writing to proc.out")
+  logger.debug("Executing replay command and writing to proc.out")
   command = ['rr', 'replay', '-a', '-n', events_str, rr_dir]
   with open(consts.PROC_FILE, 'w') as f:
     subprocess.Popen(command, stdout=f, stderr=f, env=my_env)
@@ -203,7 +204,7 @@ def process_messages(subjects):
   message = get_message(consts.RR_PIPE)
 
   # parse message - retrieve PID, event number, inject state
-  logging.debug("Parsing retrieved message: {}".format(message))
+  logger.debug("Parsing retrieved message: {}".format(message))
   while message != '':
     parts = message.split(' ')
     inject = parts[0].strip()[:-1]
@@ -211,7 +212,7 @@ def process_messages(subjects):
     pid = parts[4]
 
     # Wait until we can see the process reported by rr to continue
-    logging.debug("Checking if process {} is alive".format(pid))
+    logger.debug("Checking if process {} is alive".format(pid))
     while not util.process_is_alive(pid):
       print('waiting...')
     operating = [x for x in subjects if x['event'] == event]
@@ -221,7 +222,7 @@ def process_messages(subjects):
 
     # checking inject state
     if inject == 'INJECT':
-      logging.debug("PID {} is being injected".format(pid))
+      logger.debug("PID {} is being injected".format(pid))
 
       # read/write to JSON state file
       with open(s['injected_state_file'], 'r') as d:
@@ -237,7 +238,7 @@ def process_messages(subjects):
       subjects_injected += 1
 
     elif inject == 'DONT_INJECT':
-      logging.debug("PID {} is not being injected".format(pid))
+      logger.debug("PID {} is not being injected".format(pid))
       s['other_procs'].append(pid)
 
     # get another message, reinitiate the loop
@@ -258,12 +259,12 @@ def wait_on_handles(subjects):
 
   """
 
-  logging.debug("Checking if subject should wait")
+  logger.debug("Checking if subject should wait")
   for s in subjects:
 
     # check if handle is in subject
     if 'handle' in s:
-      logging.debug("{} on wait".format(s))
+      logger.debug("{} on wait".format(s))
       ret = s['handle'].wait()
     else:
       print('No handle associated with subject {}'.format(s))
@@ -271,7 +272,7 @@ def wait_on_handles(subjects):
 
     # check for other procs
     for i in s['other_procs']:
-      logging.debug("{} to be killed.".format(s['other_procs'][i]))
+      logger.debug("{} to be killed.".format(s['other_procs'][i]))
       try:
         os.kill(int(i), signal.SIGKILL)
       except OSError:
@@ -299,12 +300,12 @@ def cleanup():
 
   """
 
-  logging.debug("Cleaning up")
+  logger.debug("Cleaning up")
   if os.path.exists(consts.PROC_FILE):
-    logging.debug("Deleting proc.out")
+    logger.debug("Deleting proc.out")
     os.unlink(consts.PROC_FILE)
   if os.path.exists(consts.RR_PIPE):
-    logging.debug("Deleting rrdump_proc.pipe")
+    logger.debug("Deleting rrdump_proc.pipe")
     os.unlink(consts.RR_PIPE)
 
 
@@ -324,9 +325,6 @@ def main():
 
   # parse arguments
   args = parser.parse_args()
-
-  # add simple logging for verbosity
-  logging.basicConfig(level=args.loglevel)
 
   # ensure that a pre-existing pipe is unlinked before execution
   cleanup()
