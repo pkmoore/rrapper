@@ -22,8 +22,6 @@ class FutureTimeMutator:
 
   def identify_lines(self,trace):
     lines = []
-    with open(trace, 'r') as f:
-      string_lines = f.readlines()
     syscalls = Trace.Trace(trace, DEFAULT_CONFIG_PATH + 'syscall_definitions.pickle').syscalls
     for k, v in enumerate(syscalls):
       if v.name == 'time':
