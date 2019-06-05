@@ -210,7 +210,6 @@ def main():
     rr_copy(consts.STRACE_DEFAULT, test_dir + consts.STRACE_DEFAULT)
 
     # remove the exit call and the counter for the exit call
-<<<<<<< HEAD
     with open(test_dir + consts.STRACE_DEFAULT, "r") as fh:
       lines = fh.readlines()
       lines = lines[:-2]
@@ -218,14 +217,6 @@ def main():
 
     with open(test_dir + consts.STRACE_DEFAULT, "w") as fh:
       fh.writelines(lines)
-=======
-    fh = open(test_dir + consts.STRACE_DEFAULT, "r+")
-    lines = fh.readlines()
-    lines = lines[:-2]
-    lines[-1] = lines[-1][:-1] # removse the \n from the end of last line
-    fh.writelines(lines)
-    fh.close()
->>>>>>> b53fbde5c418b2a3d77e1bfbf939f62e57d350a2
 
     # create INI config file
     config = ConfigParser.ConfigParser()
