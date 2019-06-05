@@ -341,10 +341,6 @@ def main():
       identified_trace_file_index = int(args.trace_line - 1)
       identified_trace_line = trace_lines[identified_trace_file_index]
       if re.match(r'[0-9]+\s+\+\+\+\s+[0-9]+\s+\+\+\+', identified_trace_line):
-<<<<<<< HEAD
-=======
-
->>>>>>> b53fbde5c418b2a3d77e1bfbf939f62e57d350a2
         print('It seems like you have chosen a line containing an rr event '
               'number rather than a line containing a system call.  You '
               'must select a line containing a system call')
