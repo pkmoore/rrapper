@@ -33,7 +33,8 @@ setup(
             'rrinit=src.rrinit:main',
             'rrtest=src.rrtest:main',
             'rreplay=src.rreplay:main',
-            'inject=src.inject:main'
+            'inject=src.inject:main',
+            'crashsim=src.crashsim:main'
         ],
     },
     install_requires=[
