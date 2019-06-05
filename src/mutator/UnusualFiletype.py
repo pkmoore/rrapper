@@ -45,7 +45,7 @@ class UnusualFiletypeMutator:
             continue
         return k
 
-   def identify_lines(self,trace):
+  def identify_lines(self,trace):
     lines = []
     syscalls = Trace.Trace(trace, DEFAULT_CONFIG_PATH + 'syscall_definitions.pickle').syscalls
     for k, v in enumerate(syscalls):
