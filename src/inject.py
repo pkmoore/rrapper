@@ -541,9 +541,7 @@ def main():
     checker = eval(syscallreplay.injected_state['config']['checker'])
   if 'mutator' in syscallreplay.injected_state['config']:
     mutator = eval(syscallreplay.injected_state['config']['mutator'])
-    mutator.mutate_trace(config_dict['trace_file'])
-    trace = Trace.Trace(config_dict['trace_file'], pickle_file)
-    syscallreplay.syscalls = trace.syscalls
+    mutator.mutate_syscalls(syscallreplay.syscalls)
 # pylint: enable=eval-used
 
   # Requires kernel.yama.ptrace_scope = 0
