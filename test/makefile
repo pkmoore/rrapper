@@ -1,4 +1,7 @@
-all: callread calltime gtodtest renametest
+all: callfsync callread calltime gtodtest renametest
+
+callfsync: callfsync.c
+	gcc -ggdb -o callfsync callfsync.c
 
 smallprog: smallprog.c
 	gcc -ggdb -o smallprog smallprog.c
