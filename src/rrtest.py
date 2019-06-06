@@ -286,6 +286,11 @@ def main():
       identify_mutator = eval(args.mutator)
       lines = identify_mutator.identify_lines(test_dir + consts.STRACE_DEFAULT)
       lines_count = len(lines)
+
+      if (lines_count == 0) :
+        print(args.mutator,"did not find any simulation opportunities.")
+        sys.exit(0)
+
       for j in range(lines_count):
         config.add_section("request_handling_process"+str(j))
         config.set("request_handling_process"+str(j), "event", None)
