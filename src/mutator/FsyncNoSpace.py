@@ -24,9 +24,8 @@ class FsyncNoSpaceMutator:
       for l in string_lines:
         f.write(l)
 
-  def identify_lines(self,trace):
+  def identify_lines(self, syscalls):
     lines = []
-    syscalls = Trace.Trace(trace, DEFAULT_CONFIG_PATH + 'syscall_definitions.pickle').syscalls
     for k, v in enumerate(syscalls):
       if v.name == 'fsync':
         if self.name:
