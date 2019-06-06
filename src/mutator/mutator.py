@@ -9,6 +9,24 @@ class NullMutator:
         pass
 
 
+class GenericMutator:
+  def find_syscall_between_indexes(self, syscalls, start, end, pred_func):
+    if start < 0: raise ValueError('Starting index must be > 0')
+    if end < 0: raise ValueError('Ending index must be > 0')
+    if start == end: raise ValueError('starting index must not equal ending index')
+    if end > len(syscalls): raise ValueError('end index must be < len(syscalls)')
+    if not callable(pred_func): raise TypeError('pred_func must be callable')
+
+    indexes = []
+    for index, line in enumerate(syscalls):
+      if pred_func(line):
+        # We are indexing from start so if start > 0
+        # we need to add it to index to get the true index into the
+        # complete syscall list
+        indexes.append(index + start)
+
+    return indexes
+
 class Stat64FiletypeMutator:
     def __init__(self, filename, filetype):
         self.filename = filename
