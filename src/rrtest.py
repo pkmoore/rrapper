@@ -34,6 +34,7 @@ import errno
 import ConfigParser
 
 from posix_omni_parser import Trace
+from mutator.Null import NullMutator
 from mutator.CrossdiskRename import CrossdiskRenameMutator
 from mutator.FutureTime import FutureTimeMutator
 from mutator.UnusualFiletype import UnusualFiletypeMutator

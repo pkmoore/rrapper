@@ -47,7 +47,7 @@ from syscallreplay import multiplex_handlers
 from syscallreplay import util
 from syscallreplay.util import ReplayDeltaError
 
-from mutator.mutator import NullMutator
+from mutator.Null import NullMutator
 from mutator.UnusualFiletype import UnusualFiletypeMutator
 from mutator.ReverseTime import ReverseTimeMutator
 from mutator.FutureTime import FutureTimeMutator

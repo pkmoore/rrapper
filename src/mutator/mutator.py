@@ -1,14 +1,5 @@
 import tempfile
 
-
-class NullMutator:
-    def __init__(self):
-        pass
-
-    def mutate_trace(self, trace):
-        pass
-
-
 class GenericMutator:
   def find_syscall_between_indexes(self, syscalls, start, end, pred_func):
     if start < 0: raise ValueError('Starting index must be > 0')
@@ -51,7 +42,7 @@ class Stat64FiletypeMutator:
         return line.replace('st_mode=S_IFREG', 'st_mode='+self.filetype, 1)
 
 
-class ConnectMutator(NullMutator):
+class ConnectMutator(GenericMutator):
     """
     <Purpose>
       Implementation of a mutator that alters connect calls
