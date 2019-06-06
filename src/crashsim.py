@@ -58,19 +58,29 @@ def main():
       parser.print_help()
       sys.exit(1)
 
-# I'm not sure if this is necessary, the code below this works fine. Commented out for now.
+  # creating the test
+  proc_create = subprocess.Popen(["rrtest", "create", "--name", args.cmd, "--command", args.command])
+  proc_create.wait()
 
-#   proc = subprocess.Popen(["rrtest", "create", "--name", args.cmd, "--command", args.command],stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess_flags)
-#   proc.wait()
-#   (stdout, stderr) = proc.communicate()
+  if proc_create.returncode != 0:
+    print("Test creation failed")
+    sys.exit(1)
 
-#   if proc.returncode != 0:
-#     print(stderr)
-#   else:
-#     subprocess.call(["rrtest", "configure", "--name", args.cmd, "--mutator", args.mutator]) 
+  # configuring the test
+  proc_configure = subprocess.Popen(["rrtest", "configure", "--name", args.cmd, "--mutator", args.mutator]) 
+  proc_configure.wait()
 
-  subprocess.call(["rrtest", "create", "--name", args.cmd, "--command", args.command, "-f", "YES"])
-  subprocess.call(["rrtest", "configure", "--name", args.cmd, "--mutator", args.mutator])
+  if proc_configure.returncode != 0:
+    print("Test configuration failed")
+    sys.exit(1)
+  
+  # replay the test
+  proc_replay = subprocess.Popen(["rreplay", args.cmd])
+  proc_replay.wait()
+
+  if proc_replay.returncode != 0:
+    print("Replay failed")
+    sys.exit(1)
 
 if __name__ == "__main__":
   main()
