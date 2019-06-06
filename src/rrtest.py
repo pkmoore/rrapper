@@ -37,6 +37,7 @@ from posix_omni_parser import Trace
 from mutator.Null import NullMutator
 from mutator.CrossdiskRename import CrossdiskRenameMutator
 from mutator.FutureTime import FutureTimeMutator
+from mutator.ReverseTime import ReverseTimeMutator
 from mutator.UnusualFiletype import UnusualFiletypeMutator
 from checker.checker import NullChecker
 
