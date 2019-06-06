@@ -1,18 +1,13 @@
-from posix_omni_parser import Trace
-import sys
-from ..consts import DEFAULT_CONFIG_PATH
+from mutator import GenericMutator
 from MutationError import MutationError
 
-class UnusualFiletypeMutator:
 
-
+class UnusualFiletypeMutator(GenericMutator):
   def __init__(self, filetype='S_IFREG', name=None, file_descriptor=None):
-    if name != None and file_desciptor != None:
-      print('Both name and file_descriptor cannot be set at the same time')
-      sys.exit(1)
+    if name is not None and file_descriptor is not None:
+      raise MutationError('Cannot specify both a name and a file_descriptor')
     self.filetype = filetype
     self.name = name
-    self.name = None
     self.file_descriptor = file_descriptor
 
 
@@ -58,5 +53,3 @@ class UnusualFiletypeMutator:
             continue
         lines.append(k)
     return lines
-
-
