@@ -34,12 +34,12 @@ import errno
 import ConfigParser
 
 from posix_omni_parser import Trace
-from mutator.Null import NullMutator
-from mutator.CrossdiskRename import CrossdiskRenameMutator
-from mutator.FutureTime import FutureTimeMutator
-from mutator.ReverseTime import ReverseTimeMutator
-from mutator.UnusualFiletype import UnusualFiletypeMutator
-from checker.checker import NullChecker
+from mutator.Null import NullMutator                        # noqa: F401
+from mutator.CrossdiskRename import CrossdiskRenameMutator  # noqa: F401
+from mutator.FutureTime import FutureTimeMutator            # noqa: F401
+from mutator.ReverseTime import ReverseTimeMutator          # noqa: F401
+from mutator.UnusualFiletype import UnusualFiletypeMutator  # noqa: F401
+from checker.checker import NullChecker                     # noqa: F401
 
 import consts
 
@@ -150,8 +150,8 @@ def main():
   # ./rrtest pack -n testname
   pack_group.set_defaults(cmd='pack')
   pack_group.add_argument('-n', '--name',
-                              dest='name',
-                              help='name of the test to be packed')
+                          dest='name',
+                          help='name of the test to be packed')
 
   # rrtest analyze -t tracename
   analyze_group.set_defaults(cmd='analyze')
@@ -218,7 +218,7 @@ def main():
     with open(test_dir + consts.STRACE_DEFAULT, "r") as fh:
       lines = fh.readlines()
       lines = lines[:-2]
-      lines[-1] = lines[-1][:-1] # removse the \n from the end of last line
+      lines[-1] = lines[-1][:-1]  # removse the \n from the end of last line
 
     with open(test_dir + consts.STRACE_DEFAULT, "w") as fh:
       fh.writelines(lines)
@@ -234,8 +234,8 @@ def main():
 
     # output trace to STDOUT for user to determine proper trace line
     with open(test_dir + consts.STRACE_DEFAULT, 'r') as trace:
-      lineno=0
-      line='<init>'
+      lineno = 0
+      line = '<init>'
       last_endchar = '\n'
       while True:
         line = trace.readline()
@@ -268,8 +268,8 @@ def main():
     # check if config file exists
     test_dir = consts.DEFAULT_CONFIG_PATH + args.name + "/"
     if not os.path.exists(test_dir):
-      print("Test '{}' does not exist. Create before attempting to configure!" \
-              .format(args.name))
+      print("Test '{}' does not exist. Create before attempting to configure!"
+            .format(args.name))
       sys.exit(1)
 
     # read config file for rr test directory
@@ -285,7 +285,7 @@ def main():
     pid = trace_lines[0].split()[0]
 
     if args.mutator:
-      #config.set("request_handling_process", "mutator", args.mutator)
+      # config.set("request_handling_process", "mutator", args.mutator)
       # use the mutator to identify the line we are interested in
       identify_mutator = eval(args.mutator)
       pickle_file = consts.DEFAULT_CONFIG_PATH + 'syscall_definitions.pickle'
@@ -300,16 +300,16 @@ def main():
         sys.exit(0)
 
       for j in range(lines_count):
-        config.add_section("request_handling_process"+str(j))
-        config.set("request_handling_process"+str(j), "event", None)
-        config.set("request_handling_process"+str(j), "pid", None)
-        config.set("request_handling_process"+str(j), "trace_file", test_dir + consts.STRACE_DEFAULT)
-        config.set("request_handling_process"+str(j), "trace_start", 0)
-        config.set("request_handling_process"+str(j), "trace_end", 0)
+        config.add_section("request_handling_process" + str(j))
+        config.set("request_handling_process" + str(j), "event", None)
+        config.set("request_handling_process" + str(j), "pid", None)
+        config.set("request_handling_process" + str(j), "trace_file", test_dir + consts.STRACE_DEFAULT)
+        config.set("request_handling_process" + str(j), "trace_start", 0)
+        config.set("request_handling_process" + str(j), "trace_end", 0)
 
         identified_syscall_list_index = lines[j]
 
-        config.set("request_handling_process"+str(j), "mutator", args.mutator)
+        config.set("request_handling_process" + str(j), "mutator", args.mutator)
         # we must multiply by 2 here because the mutator is looking at a list
         # of parsed system call objects NOT the trace file itself.  This means
         # index A in the list of system calls corresponds with line number (A * 2)
@@ -326,17 +326,17 @@ def main():
         # This snip will be sniplen (default 5) system calls in length and will have
         # the rr event number lines from the main recording STRIPPED OUT.
         lines_written = 0
-        with open(test_dir + "trace_snip"+str(j)+".strace", 'wb') as snip_file:
+        with open(test_dir + "trace_snip" + str(j) + ".strace", 'wb') as snip_file:
           for i in range(0, args.sniplen * 2, 2):
             try:
               snip_file.write(trace_lines[identified_trace_file_index + i])
               lines_written += 1
             except IndexError:
               break
-        config.set("request_handling_process"+str(j), "trace_file", test_dir + "trace_snip"+str(j)+".strace")
-        config.set("request_handling_process"+str(j), "event", user_event)
-        config.set("request_handling_process"+str(j), "pid", pid)
-        config.set("request_handling_process"+str(j), "trace_end", lines_written)
+        config.set("request_handling_process" + str(j), "trace_file", test_dir + "trace_snip" + str(j) + ".strace")
+        config.set("request_handling_process" + str(j), "event", user_event)
+        config.set("request_handling_process" + str(j), "pid", pid)
+        config.set("request_handling_process" + str(j), "trace_end", lines_written)
 
         # write final changes to config file
         with open(test_dir + "config.ini", 'w+') as config_file:
@@ -376,7 +376,7 @@ def main():
       config.set("request_handling_process", "event", user_event)
       config.set("request_handling_process", "pid", pid)
       config.set("request_handling_process", "trace_end", lines_written)
-              # write final changes to config file
+      # write final changes to config file
       with open(test_dir + "config.ini", 'w+') as config_file:
         config.write(config_file)
     # We want the event JUST BEFORE our chosen system call so we must go
@@ -430,6 +430,7 @@ def main():
   else:
     parser.print_help()
     sys.exit(1)
+
 
 if __name__ == '__main__':
   main()
