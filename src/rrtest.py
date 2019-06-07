@@ -288,8 +288,9 @@ def main():
       lines = identify_mutator.identify_lines(test_dir + consts.STRACE_DEFAULT)
       lines_count = len(lines)
 
-      if (lines_count == 0) :
-        print(args.mutator,"did not find any simulation opportunities.")
+      if (lines_count == 0):
+        print("{} did not find any simulation opportunities."
+              .format(args.mutator))
         sys.exit(0)
 
       for j in range(lines_count):

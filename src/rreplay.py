@@ -108,10 +108,9 @@ def get_configuration(ini_path):
   rr_dir_section = sections[0]
   rr_dir = cfg.get(rr_dir_section, 'rr_dir')
   sections = sections[1:]
-  check_null = len(sections)
 
-  if (check_null == 0) :
-    print("Configuration does not contain simulation opportunities.")
+  if (len(sections) == 0):
+    print("Configuration does not contain any simulation opportunities.")
     sys.exit(0)
 
   # for each following item
