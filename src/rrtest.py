@@ -37,6 +37,7 @@ from posix_omni_parser import Trace
 from mutator.Null import NullMutator
 from mutator.CrossdiskRename import CrossdiskRenameMutator
 from mutator.FutureTime import FutureTimeMutator
+from mutator.ReverseTime import ReverseTimeMutator
 from mutator.UnusualFiletype import UnusualFiletypeMutator
 from checker.checker import NullChecker
 
@@ -284,7 +285,10 @@ def main():
       #config.set("request_handling_process", "mutator", args.mutator)
       # use the mutator to identify the line we are interested in
       identify_mutator = eval(args.mutator)
-      lines = identify_mutator.identify_lines(test_dir + consts.STRACE_DEFAULT)
+      pickle_file = consts.DEFAULT_CONFIG_PATH + 'syscall_definitions.pickle'
+      syscalls = Trace.Trace(test_dir + consts.STRACE_DEFAULT, pickle_file).syscalls
+      lines = identify_mutator.identify_lines(syscalls)
+
       lines_count = len(lines)
 
       if (lines_count == 0):

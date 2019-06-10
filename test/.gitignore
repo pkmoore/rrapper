@@ -2,3 +2,5 @@ smallprog
 callread
 gtodtest
 renametest
+callfsync
+calltime

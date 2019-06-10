@@ -28,6 +28,7 @@ import json
 import traceback
 import logging
 import argparse
+import re
 
 import consts
 
@@ -464,7 +465,7 @@ def apply_mmap_backing_files():
 
 
 
-def exit_with_status(pid, code):
+def exit_with_status(pid, code, mutator, event, index = 0):
   """
   <Purpose>
     Method that ensures that the injector is safely exited by
@@ -475,12 +476,15 @@ def exit_with_status(pid, code):
     None
 
   """
+  mut = re.findall(r'src.mutator.\w+.(\w+)', mutator)
+  error = int(event) + int(index)
+
   _kill_parent_process(pid)
   if code != 0:
     traceback.print_exc()
-    print('Failed to complete trace')
+    print('\n{}() mutating event No.{} failed to complete trace, resulting in errors in event No.{}.\n'.format(mut[0], event, error))
   else:
-    print('Completed the trace')
+    print('\n{}() mutating event number {} finished replay without deltas.\n'.format(mut[0], event))
   sys.exit(code)
 
 
@@ -517,6 +521,7 @@ def main():
   config_dict = syscallreplay.injected_state['config']
   pid = int(config_dict['pid'])
   rec_pid = config_dict['rec_pid']
+  event_number = config_dict['event']
   apply_open_fds(rec_pid)
   apply_mmap_backing_files()
 
@@ -536,9 +541,7 @@ def main():
     checker = eval(syscallreplay.injected_state['config']['checker'])
   if 'mutator' in syscallreplay.injected_state['config']:
     mutator = eval(syscallreplay.injected_state['config']['mutator'])
-    mutator.mutate_trace(config_dict['trace_file'])
-    trace = Trace.Trace(config_dict['trace_file'], pickle_file)
-    syscallreplay.syscalls = trace.syscalls
+    mutator.mutate_syscalls(syscallreplay.syscalls)
 # pylint: enable=eval-used
 
   # Requires kernel.yama.ptrace_scope = 0
@@ -572,7 +575,7 @@ def main():
                            syscall_object,
                            syscallreplay.entering_syscall)
     except:
-      exit_with_status(pid, 1)
+      exit_with_status(pid, 1, str(mutator), event_number, syscallreplay.syscall_index)
 
     # call transition() if checker is implemented
     if checker:
@@ -594,7 +597,7 @@ def main():
         else:
           print('{} not accepted'.format(checker))
         print('####  End Checker Status  ####')
-      exit_with_status(pid, 0)
+      exit_with_status(pid, 0, str(mutator), event_number)
 
 
 
