@@ -115,9 +115,11 @@ def main():
   create_group.set_defaults(cmd='create')
   create_group.add_argument('-n', '--name',
                             dest='name',
+                            required=True,
                             help='name of the test to be created')
   create_group.add_argument('-c', '--command',
                             dest='command',
+                            required=True,
                             help='specify command for rrtest')
   create_group.add_argument('-f', '--force',
                             dest='force',
@@ -127,6 +129,7 @@ def main():
   configure_group.set_defaults(cmd='configure')
   configure_group.add_argument('-n', '--name',
                                dest='name',
+                               required=True,
                                help='name of the test to be configured')
   configure_group.add_argument('-t', '--traceline',
                                dest='trace_line',

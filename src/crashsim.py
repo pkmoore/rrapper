@@ -21,22 +21,36 @@ import logging
 def main():
   # initialize parser
   parser = argparse.ArgumentParser()
-  subparsers = parser.add_subparsers()
+  subparser = parser.add_subparsers(metavar='MYTEST', help='name of test')
 
-  # two commands - create / configure
-  test_name = subparsers.add_parser(sys.argv[1])
 
-  # ./rrtest create -n testname -c "./runthisbinary"
+  # if no arguments given
+  try:
+    sys.argv[1]
+  except:
+    parser.print_help()
+    sys.exit(1)
+
+  if sys.argv[1] == "-h":
+    parser.print_help()
+    sys.exit(1)
+
+  test_name = subparser.add_parser(sys.argv[1])
+
+  # setting necessary flags
   test_name.set_defaults(cmd=sys.argv[1])
   test_name.add_argument('-m', '--mutator',
                                dest='mutator',
+                               required=True,
                                help='mutator to use')
   test_name.add_argument('-c', '--command',
-                            dest='command',
-                            help='specify command for rrtest')
-  # test_name.add_argument('-f', '--force',
-  #                           dest='force',
-  #                           help='force overwrite creation of the test')
+                               dest='command',
+                               required=True,
+                               help='specify command for rrtest')
+  test_name.add_argument('-f', '--force',
+                               dest='force',
+                               default='YES',
+                               help='force overwrite creation of the test')
 
   # general flags to be set
   parser.add_argument('-v', '--verbosity',
@@ -51,15 +65,9 @@ def main():
   # configure logger
   logging.basicConfig(level=args.verbosity)
 
-  # initialize actual application logic 
-  man_options = ['command']
-  for opt in man_options:
-    if not args.__dict__[opt]:
-      parser.print_help()
-      sys.exit(1)
-
   # creating the test
-  proc_create = subprocess.Popen(["rrtest", "create", "--name", args.cmd, "--command", args.command])
+  proc_create = subprocess.Popen(["rrtest", "create", "--name", args.cmd,
+      "--command", args.command, "-f", args.force])
   proc_create.wait()
 
   logging.debug("Checking if rrtest create is successfull")
