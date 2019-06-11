@@ -319,30 +319,15 @@ def cleanup():
 
 
 
-
-
-def main():
-  # initialize argparse
-  parser = argparse.ArgumentParser()
-  parser.add_argument('-v', '--verbosity',
-                      dest='loglevel',
-                      action='store_const',
-                      const=logging.DEBUG,
-                      help='flag for displaying debug information')
-  parser.add_argument('testname',
-                      help='specify rrtest-created test for replay')
-
-  # parse arguments
-  args = parser.parse_args()
-
+def call_replay(test_name, verbosity):
   # ensure that a pre-existing pipe is unlinked before execution
   cleanup()
 
   # check if user-specified test exists
-  test_dir = consts.DEFAULT_CONFIG_PATH + args.testname
+  test_dir = consts.DEFAULT_CONFIG_PATH + test_name
   if not os.path.exists(test_dir):
     print("Test {} does not exist. Create before attempting to configure!" \
-            .format(args.testname))
+            .format(test_name))
     sys.exit(1)
 
   # read config.ini from the test directory
@@ -359,6 +344,28 @@ def main():
 
   # cleanup routine
   cleanup()
+
+
+
+
+
+def main():
+  # initialize argparse
+  parser = argparse.ArgumentParser()
+  parser.add_argument('-v', '--verbosity',
+                      dest='loglevel',
+                      action='store_const',
+                      const=logging.DEBUG,
+                      help='flag for displaying debug information')
+  parser.add_argument('testname',
+                      help='specify rrtest-created test for replay')
+
+  # parse arguments
+  args = parser.parse_args()
+
+  call_replay(args.testname, args.loglevel)
+
+  
 
 
 

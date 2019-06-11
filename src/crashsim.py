@@ -17,6 +17,8 @@ import sys
 import argparse
 import subprocess
 import logging
+from rrtest import create_test, configure_test, list_test, pack_test, analyze_test 
+from rreplay import call_replay
 
 def main():
   # initialize parser
@@ -66,29 +68,17 @@ def main():
   logging.basicConfig(level=args.verbosity)
 
   # creating the test
-  proc_create = subprocess.Popen(["rrtest", "create", "--name", args.cmd,
-      "--command", args.command, "-f", args.force])
-  proc_create.wait()
-
-  logging.debug("Checking if rrtest create is successfull")
-  if proc_create.returncode != 0:
-    sys.exit(1)
+  logging.debug("----------creating test----------")
+  create_test(args.cmd, args.command, args.force, args.verbosity)
 
   # configuring the test
-  proc_configure = subprocess.Popen(["rrtest", "configure", "--name", args.cmd, "--mutator", args.mutator]) 
-  proc_configure.wait()
-
-  logging.debug("Checking if rrtest configure is successfull")
-  if proc_configure.returncode != 0:
-    sys.exit(1)
+  logging.debug("----------configuring test----------")
+  configure_test(args.cmd, args.mutator, args.verbosity)
   
   # replay the test
-  proc_replay = subprocess.Popen(["rreplay", args.cmd])
-  proc_replay.wait()
-
-  logging.debug("Checking if rreplay is successfull")
-  if proc_replay.returncode != 0:
-    sys.exit(1)
+  logging.debug("----------replaying test----------")
+  call_replay(args.cmd, args.verbosity)
 
 if __name__ == "__main__":
   main()
+  sys.exit(0)
