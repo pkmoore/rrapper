@@ -113,14 +113,6 @@ def get_configuration(ini_path):
     print("Configuration does not contain any simulation opportunities.")
     sys.exit(0)
 
-  if (len(sections) == 0):
-    print("Configuration does not contain any simulation opportunities.")
-    sys.exit(0)
-
-  if (len(sections) == 0):
-    print("Configuration does not contain any simulation opportunities.")
-    sys.exit(0)
-
   # for each following item
   logger.debug("Parsing INI configuration")
   for i in sections:

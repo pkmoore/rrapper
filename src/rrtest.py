@@ -314,6 +314,7 @@ def main():
         identified_syscall_list_index = lines[j]
 
         config.set("request_handling_process"+str(j + mutator_flag), "mutator", args.mutator)
+
         # we must multiply by 2 here because the mutator is looking at a list
         # of parsed system call objects NOT the trace file itself.  This means
         # index A in the list of system calls corresponds with line number (A * 2)
@@ -330,6 +331,7 @@ def main():
         # This snip will be sniplen (default 5) system calls in length and will have
         # the rr event number lines from the main recording STRIPPED OUT.
         lines_written = 0
+
         with open(test_dir + "trace_snip"+str(j + mutator_flag)+".strace", 'wb') as snip_file:
           for i in range(0, args.sniplen * 2, 2):
             try:
@@ -337,6 +339,7 @@ def main():
               lines_written += 1
             except IndexError:
               break
+
         config.set("request_handling_process"+str(j + mutator_flag), "trace_file", test_dir + "trace_snip"+str(j + mutator_flag) + ".strace")
         config.set("request_handling_process"+str(j + mutator_flag), "event", user_event)
         config.set("request_handling_process"+str(j + mutator_flag), "pid", pid)
