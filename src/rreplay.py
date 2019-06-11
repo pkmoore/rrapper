@@ -147,6 +147,11 @@ def get_configuration(ini_path):
     logger.debug("Subject parsed: {}".format(s))
     subjects.append(s)
 
+  def _sort_by_event(sub):
+    return int(sub['event'])
+
+  subjects.sort(key=_sort_by_event)
+
   return rr_dir, subjects
 
 
