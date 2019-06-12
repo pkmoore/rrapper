@@ -290,6 +290,13 @@ def main():
       identify_mutator = eval(args.mutator)
       pickle_file = consts.DEFAULT_CONFIG_PATH + 'syscall_definitions.pickle'
       syscalls = Trace.Trace(test_dir + consts.STRACE_DEFAULT, pickle_file).syscalls
+
+      # ignore syscalls before the 'syscall_xxx()' marker
+      for i in range(len(syscalls)):
+        if 'syscall_' in syscalls[i].name:
+          break
+      syscalls=syscalls[i:]
+
       lines = identify_mutator.identify_lines(syscalls)
 
       lines_count = len(lines)
