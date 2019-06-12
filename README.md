@@ -58,7 +58,8 @@ Virtual Box DOES NOT support virtualized performance counters.
 
 **Note that some of these settings can be reverted upon system restart.**
 
-* An installed and working copy of our modified version of rr located [here](https://github.com/pkmoore/rr/)
+* An installed and working copy of our modified version of rr located [here](https://github.com/pkmoore/rr/tree/spin-off).
+Note that you must install the ```spin-off``` branch from this repository __NOT__ the master branch.
 
 **Very Important Note: You must pull and use the spin-off branch from the repository containing our modified version of rr.  The master branch tracks the unmodified version of rr provided by mozilla/rr**
 
