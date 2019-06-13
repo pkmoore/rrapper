@@ -19,7 +19,7 @@ class TestGetConfiguration(unittest.TestCase):
     """
 
     @mock.patch('ConfigParser.SafeConfigParser.read')
-    @mock.patch('rreplay.logging')
+    @mock.patch('rreplay.logger')
     def test_get_configuration(self, mock_logger, mock_config_read):
         """ Ensure that the configuration file is opened and parsed
         """
@@ -42,7 +42,7 @@ class TestExecuteRR(unittest.TestCase):
     """
 
     @mock.patch('os.environ.copy')
-    @mock.patch('rreplay.logging')
+    @mock.patch('rreplay.logger')
     @mock.patch('__builtin__.open')
     @mock.patch('subprocess.Popen')
     def test_execute_rr(self, mock_popen, mock_open, mock_logger, mock_environ_copy):
