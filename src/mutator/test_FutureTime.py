@@ -3,14 +3,13 @@
 '''
 
 import unittest
-import mock
-from bunch import Bunch
 import tempfile
 from posix_omni_parser import Trace
 
 from ..consts import DEFAULT_CONFIG_PATH
 
 from FutureTime import FutureTimeMutator
+
 
 class TestIdentify(unittest.TestCase):
   '''Test identify_opportunities

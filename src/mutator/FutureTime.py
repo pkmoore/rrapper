@@ -10,3 +10,11 @@ class FutureTimeMutator(GenericMutator):
     for k, v in enumerate(syscalls):
       if v.name == 'time':
         syscalls[k].ret = (syscalls[k].ret[0] + self.seconds, '')
+
+
+  def identify_lines(self, syscalls):
+    lines = []
+    for k, v in enumerate(syscalls):
+      if v.name == 'time':
+        lines.append(k)
+    return lines
