@@ -214,9 +214,13 @@ def configure_test(name, mutator, verbosity, trace_line=0, sniplen=5):
       for i in range(len(syscalls)):
         if 'syscall_' in syscalls[i].name:
           break
+
+      off_set = i
       syscalls=syscalls[i:]
 
       lines = identify_mutator.identify_lines(syscalls)
+      for i in range(len(lines)):
+        lines[i] += off_set
 
       lines_count = len(lines)
 
