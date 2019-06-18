@@ -13,7 +13,6 @@ import syscallreplay
 
 from inject import exit_with_status
 from inject import apply_mmap_backing_files
-from inject import apply_open_fds
 from inject import consume_configuration
 from inject import parse_backing_files
 from inject import debug_handle_syscall
@@ -100,20 +99,6 @@ class TestApplyMmapBackingFilesTestCase(unittest.TestCase):
         mock_syscallreplay.injected_state = {'config': {}}
         apply_mmap_backing_files()
         mock_parse_backing_files.assert_not_called()
-
-
-class TestApplyOpenFds(unittest.TestCase):
-    """ Test applying open fds to the correct spot in injected_state
-    """
-
-    @mock.patch('inject.syscallreplay', spec=['injected_state'])
-    def test_apply_openfds(self, mock_sr):
-        """ Make sure open fds are applied correctly
-        """
-
-        mock_sr.injected_state = {'open_fds': {'1111': [1]}}
-        apply_open_fds('1111')
-        self.assertEqual(cmp(mock_sr.injected_state['open_fds'], [1]), 0)
 
 
 class TestConsumeConfiguration(unittest.TestCase):
