@@ -365,9 +365,6 @@ def main():
 
   call_replay(args.testname, args.loglevel)
 
-  
-
-
 
 
 
@@ -391,6 +388,6 @@ if __name__ == '__main__':
 
   # catch any other sort of exception that may occur, and ensure proper cleanup
   # is still performed
-  except Exception:
+  except Exception as e:
     cleanup()
-    sys.exit(1)
+    raise e
