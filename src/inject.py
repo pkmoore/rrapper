@@ -429,23 +429,6 @@ def consume_configuration(config):
 
 
 
-def apply_open_fds(rec_pid):
-  """
-  <Purpose>
-    Obtains open file descriptors from rec_pid and sets it
-    within the injected state.
-
-  <Returns>
-    None
-
-  """
-  fds_for_pid = syscallreplay.injected_state['open_fds'][rec_pid]
-  syscallreplay.injected_state['open_fds'] = fds_for_pid
-
-
-
-
-
 def apply_mmap_backing_files():
   """
   <Purpose>
@@ -456,10 +439,10 @@ def apply_mmap_backing_files():
     None
 
   """
-  if 'mmap_backing_files' in syscallreplay.injected_state['config']:
-    line = syscallreplay.injected_state['config']['mmap_backing_files']
+  if 'mmap_backing_files' in syscallreplay.injected_state:
+    line = syscallreplay.injected_state['mmap_backing_files']
     files = parse_backing_files(line)
-    syscallreplay.injected_state['config']['mmap_backing_files'] = files
+    syscallreplay.injected_state['mmap_backing_files'] = files
 
 
 
@@ -518,11 +501,10 @@ def main():
   consume_configuration(config)
 
   # Configure various locals from the config section of our injected state
-  config_dict = syscallreplay.injected_state['config']
+  config_dict = syscallreplay.injected_state
   pid = int(config_dict['pid'])
   rec_pid = config_dict['rec_pid']
   event_number = config_dict['event']
-  apply_open_fds(rec_pid)
   apply_mmap_backing_files()
 
   # create trace object
@@ -537,10 +519,10 @@ def main():
   mutator = None
 
 # pylint: disable=eval-used
-  if 'checker' in syscallreplay.injected_state['config']:
-    checker = eval(syscallreplay.injected_state['config']['checker'])
-  if 'mutator' in syscallreplay.injected_state['config']:
-    mutator = eval(syscallreplay.injected_state['config']['mutator'])
+  if 'checker' in syscallreplay.injected_state:
+    checker = eval(syscallreplay.injected_state['checker'])
+  if 'mutator' in syscallreplay.injected_state:
+    mutator = eval(syscallreplay.injected_state['mutator'])
     mutator.mutate_syscalls(syscallreplay.syscalls)
 # pylint: enable=eval-used
 
