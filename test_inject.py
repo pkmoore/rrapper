@@ -84,7 +84,7 @@ class TestApplyMmapBackingFilesTestCase(unittest.TestCase):
         """ Test applying mmap backing file configuration
         """
 
-        mock_sr.injected_state = {'config': {'mmap_backing_files': '1:/test'}}
+        mock_sr.injected_state = {'mmap_backing_files': '1:/test'}
         apply_mmap_backing_files()
         mock_parse_backing_files.assert_called_with('1:/test')
 
@@ -96,7 +96,7 @@ class TestApplyMmapBackingFilesTestCase(unittest.TestCase):
         """ Test not applying backing files when they are not present
         """
 
-        mock_syscallreplay.injected_state = {'config': {}}
+        mock_syscallreplay.injected_state = {}
         apply_mmap_backing_files()
         mock_parse_backing_files.assert_not_called()
 
