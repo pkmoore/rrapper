@@ -194,22 +194,23 @@ def execute_rr(rr_dir, subjects):
 
   """
 
-  <Returns>
-    None
-
-  """
-
-  # create a new event string listing pid to record and event to listen for
-  # (e.g 14350:16154)
+  # create a new event string that tells rr which recorded pid:event combos
+  # to generate process sets for.
+  # Format  (e.g rec_pid:event)
   events_str = ''
   for i in subjects:
     events_str += i['rec_pid'] + ':' + i['event'] + ','
   logger.debug("Event string: {}".format(events_str))
 
-  # retrieve environmental variables
+  # retrieve environmental variables (mostly for running rr with the user's
+  # configured RR_LOG value)
   my_env = os.environ.copy()
 
-  # execute rr with spin-off switch.  Output tossed into proc.out
+  # Execute rr with spin-off switch.  Output tossed into proc.out
+  # When launched in this fashion, rr will send messages out through
+  # a pipe (rrdump_proc.pipe) whenever a process set is ready.
+  # We monitor this pipe with process_messages and assign process sets
+  # test subjects as rr generates them.
   logger.debug("Executing replay command and writing to proc.out")
   command = ['rr', 'replay', '-a', '-n', events_str, rr_dir]
   with open(consts.PROC_FILE, 'w') as f:
