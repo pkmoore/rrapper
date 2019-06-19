@@ -348,26 +348,28 @@ def process_messages(subjects):
 def wait_on_handles(subjects):
   """
   <Purpose>
-    Wait on handles for each subject. Ensure that other procs
-    are killed accordingly with SIGKILL.
+
+  This function waits on the supervisor processes (inject.py) to complete
+  their tests before cleaning everything up.
 
   <Returns>
     None
 
   """
 
-  logger.debug("Checking if subject should wait")
   for s in subjects:
-
-    # check if handle is in subject
+    # If we have a handle for a given subject (i.e. there wasn't some
+    # earlier problem getting the subject matched up with a process set),
+    # we wait for its supervisor process to finish its testing here.
     if 'handle' in s:
-      logger.debug("{} on wait".format(s))
+      logger.debug("waiting on {}".format(s))
       ret = s['handle'].wait()
     else:
       logger.error('No handle associated with subject {}'.format(s))
       ret = -1
 
-    # check for other procs
+    #  If a subject has any uninteresting "other processes" associated with it,
+    #  we kill them here.
     for i in s['other_procs']:
       logger.debug("{} to be killed.".format(s['other_procs'][i]))
       try:
@@ -375,10 +377,10 @@ def wait_on_handles(subjects):
       except OSError:
         pass
 
-    # print error if return value != 0
+    # Report to the user if a supervisor failed unexpectedly
     if ret != 0:
-      print('Injector for event:rec_pid {}:{} failed'
-            .format(s['event'], s['rec_pid']))
+      logger.error('CrashSimulator supervisor for event:rec_pid {}:{} failed'
+                   .format(s['event'], s['rec_pid']))
 
 
 
