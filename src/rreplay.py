@@ -158,13 +158,41 @@ def get_configuration(ini_path):
 
 
 
+def create_event_configuration_files(subjects):
+  """
+  <Purpose>
+
+  This function takes the test subjects parsed out of the main config file we
+  are using and writes them out to individual event-specific config files.
+  These event specific config files are picked up when rr indicates it has
+  generated a process set for this event and used to create specific config
+  files that tie together a test configuration process set metadata.
+
+  <Returns>
+  None
+
+
+  """
+
+  for s in subjects:
+    with open(s['injected_state_file'], 'w') as d:
+      json.dump(s, d)
+      d.flush()
+
+
+
+
+
 def execute_rr(rr_dir, subjects):
   """
   <Purpose>
-    rr execution method.
+  This method launches rr based on the requirements parsed out of the main
+  configuration file (config.ini).
 
-    Create a new event string with pid and event for rr replay,
-    and then actually execute rr with the string.
+  <Returns>
+    None
+
+  """
 
   <Returns>
     None
@@ -332,6 +360,8 @@ def call_replay(test_name, verbosity):
 
   # read config.ini from the test directory
   rr_dir, subjects = get_configuration(test_dir + "/" + "config.ini")
+
+  create_event_configuration_files(subjects)
 
   # execute rr
   execute_rr(rr_dir, subjects)
