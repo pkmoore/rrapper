@@ -237,9 +237,28 @@ def execute_rr(rr_dir, subjects):
 def process_messages(subjects):
   """
   <Purpose>
-    Retrieves messages from the specified named pipe, and parse
-    accordingly. Once inject events are retrieved, a JSON file
-    is generated and the injector is called to work accordingly.
+    This is where the magic happens.  This function retrieves messages from rr
+    via the named pipe we created earlier (rrdump_proc.pipe).  rr posts a set
+    of these messages to the pipe every time it generates a process set.  These
+    messages tell us to either INJECT or DONT_INJECT each process in a process
+    set based on whether the process is on in which we will allow a mutator to
+    simulate an anomaly.
+
+    Processes that are marked as INJECT result in a copy of the crashsim process
+    supervisor code in inject.py being launched.  From here, this code attaches
+    to the process set in question and simulates an anomaly using the mutator
+    assigned to the process set.
+
+    The configuration that drives this processis derived from the event
+    configuration described in create_event_configuration_files().  This
+    more specific configuration maps the details in the event configuration
+    to a real process set so the process supervisor (inject.py) knows to
+    what it should attach.
+
+    Processes that are marked as DONT_INJECT are added to the test subject
+    associated with the process set's "other processes" list so we can keep
+    track of them and kill them off after testing has finished.
+
 
     A message on the pipe looks like:
     INJECT: EVENT: <event number> PID: <pid> REC_PID: <rec_pid>\n
@@ -252,10 +271,11 @@ def process_messages(subjects):
   """
 
 
-  # parse message - retrieve PID, event number, inject state
+  # we want to loop until all of our test subjects have been associated
+  # with a process set from rr.  As a result, we must track how many subjects
+  # we have handled.  Because we will get multiple messages per process set,
+  # this loop will run many times per subject (once or each process in its process set)
   subjects_handled = set()
-  print(len(subjects_handled))
-  print(len(subjects))
   while len(subjects_handled) < len(subjects):
     message = get_message(consts.RR_PIPE)
     logger.debug("Parsing retrieved message: {}".format(message))
@@ -273,7 +293,9 @@ def process_messages(subjects):
       if i['event'] == event and (i['event'], i['mutator']) not in subjects_handled:
         subjects_for_event.append(i)
 
-    # Wait until we can see the process reported by rr to continue
+    # rr has reported that it generated a process for us as part
+    # of creating a process set.  We want to wait to confirm this process
+    # is alive before we continue.
     logger.debug("Checking if process {} is alive".format(pid))
     while not util.process_is_alive(pid):
       print('waiting...')
@@ -282,35 +304,38 @@ def process_messages(subjects):
     if inject == 'INJECT':
       logger.debug("PID {} is being injected".format(pid))
 
-      # Here we break out the json config file that describes
-      # what to do at a given event into multiple json files, one for each
-      # process reported by rr.  We have to do this here because, prior
-      # to this point, we didn't know the real PID we need to inject
+      # Here we generate specific config file for a subject+process set pair.
       try:
-        print(subjects_for_event)
+        # First we grab the next subject that can simulate an anomaly at this
+        # rr event
         s = subjects_for_event.pop()
       except IndexError:
         logger.warning('rr generated an extra process for which we have no subject')
         logger.warning('We will ignore it but the zombie will remain running')
         continue
+      # mark the subject as handled so we don't grab it again above
       subjects_handled.add((s['event'], s['mutator']))
+      # Load the event-level config for the subject we're working on
       eventwise_statefile = s['injected_state_file']
       with open(eventwise_statefile, 'r') as d:
         tmp = json.load(d)
+        # Add a pid field to the dict we loaded from the event-level config
         tmp['pid'] = pid
-        # This is the new file that maps a pid to a event + mutator combo
+        # Generate a unique name for new subject+pid specific config
         pid_unique_statefile = tmp['pid'] + '_' + eventwise_statefile
       with open(pid_unique_statefile, 'w') as d:
         json.dump(tmp, d)
         d.flush()
-
-      # initiate injector with a pid + event + mutator unique
-      # statefile
-      print('injecting', pid, s['event'], s['mutator'])
+      logger.debug('Generated subject+pid specific config named {}'
+                   .format(pid_unique_statefile))
+      # Kick off the process supervisor supplying it with the subject+pid
+      # specific config we just generated we just generated.
       s['handle'] = subprocess.Popen(['inject',
                                       '--verbosity=40',
                                       pid_unique_statefile])
 
+    # Otherwise, we just ask the subject to track these uninteresting processes
+    # so we can clean them up after testing is done.
     elif inject == 'DONT_INJECT':
       logger.debug("PID {} is not being injected".format(pid))
       s['other_procs'].append(pid)
@@ -339,7 +364,7 @@ def wait_on_handles(subjects):
       logger.debug("{} on wait".format(s))
       ret = s['handle'].wait()
     else:
-      print('No handle associated with subject {}'.format(s))
+      logger.error('No handle associated with subject {}'.format(s))
       ret = -1
 
     # check for other procs
