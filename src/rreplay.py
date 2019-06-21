@@ -166,6 +166,15 @@ def get_configuration(ini_path):
     return int(sub['event'])
   subjects.sort(key=_sort_by_event)
 
+  # clean up any brk() kernel mapping files that might already exist
+  # for each of the subjects
+
+  for i in subjects:
+    try:
+      os.remove(s['rec_pid'] + '_brks.json')
+    except OSError:
+      pass
+
   return rr_dir, subjects
 
 

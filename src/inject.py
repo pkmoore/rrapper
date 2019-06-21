@@ -424,6 +424,20 @@ def consume_configuration(config):
   with open(config, 'r') as cfg_file:
     syscallreplay.injected_state = json.load(cfg_file)
   os.remove(config)
+  possible_brks_filename = syscallreplay.injected_state['rec_pid'] + '_brks.json'
+  if os.path.exists(possible_brks_filename):
+    with open(possible_brks_filename, 'r') as brks_file:
+      logger.debug('loading brks file {}'.format(possible_brks_filename))
+      data = brks_file.read()
+      data = '[' + data[:-2] + ']'
+      syscallreplay.injected_state['brks'] = json.loads(data)
+      for i in range(len(syscallreplay.injected_state['brks'])):
+        syscallreplay.injected_state['brks'][i]['start'] = int(syscallreplay.injected_state['brks'][i]['start'].strip('"'), 16)
+        syscallreplay.injected_state['brks'][i]['prot'] = int(syscallreplay.injected_state['brks'][i]['prot'].strip('"'))
+        syscallreplay.injected_state['brks'][i]['flags'] = int(syscallreplay.injected_state['brks'][i]['flags'].strip('"'))
+        syscallreplay.injected_state['brks'][i]['size'] = int(syscallreplay.injected_state['brks'][i]['size'].strip('"'))
+    os.remove(possible_brks_filename)
+
 
 
 

@@ -39,9 +39,9 @@ class TestExitWithStatusTestCase(unittest.TestCase):
 
         pid = 555
         exit_status = 0
-        mutator = 'src.mutator.ReverseTime.ReverseTimeMutator'
-        event = 100
-        index = 2
+        event = 140
+        index = 26
+        mutator = '<src.mutator.Null.NullMutator instance at 0xb736808c>'
         exit_with_status(pid, exit_status, mutator, event, index)
         mock__kill_parent_process.assert_called_with(pid)
         mock_exit.assert_called_with(exit_status)
@@ -62,9 +62,9 @@ class TestExitWithStatusTestCase(unittest.TestCase):
 
         pid = 555
         exit_status = -1
-        mutator = 'src.mutator.ReverseTime.ReverseTimeMutator'
-        event = 100
-        index = 2
+        event = 150
+        index = 26
+        mutator = '<src.mutator.Null.NullMutator instance at 0xb736808c>'
         exit_with_status(pid, exit_status, mutator, event, index)
         mock__kill_parent_process.assert_called_with(pid)
         mock_exit.assert_called_with(exit_status)
@@ -107,8 +107,9 @@ class TestConsumeConfiguration(unittest.TestCase):
 
     @mock.patch('__builtin__.open')
     @mock.patch('json.load')
+    @mock.patch('os.path.exists', return_value=False)
     @mock.patch('os.remove')
-    def test_consume_configuration(self, mock_remove, mock_load, mock_open):
+    def test_consume_configuration(self, mock_remove, mock_exists, mock_load, mock_open):
         """ Ensure file is opened with read, loaded as json, and removed
         """
         config_file = 'config.json'
