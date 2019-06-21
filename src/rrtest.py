@@ -32,6 +32,7 @@ import logging
 import shutil
 import errno
 import ConfigParser
+import Queue
 
 from posix_omni_parser import Trace
 from mutator.Null import NullMutator                        # noqa: F401
@@ -41,6 +42,7 @@ from mutator.ReverseTime import ReverseTimeMutator          # noqa: F401
 from mutator.UnusualFiletype import UnusualFiletypeMutator  # noqa: F401
 from checker.checker import NullChecker                     # noqa: F401
 from Block import Block
+from threading import Thread
 
 import consts
 
@@ -204,8 +206,12 @@ def configure_test(name, mutator, verbosity, trace_line=0, sniplen=5):
     if mutator:
       #config.set("request_handling_process", "mutator", args.mutator)
       # use the mutator to identify the line we are interested in
-      identify_mutator = eval(mutator)
       pickle_file = consts.DEFAULT_CONFIG_PATH + 'syscall_definitions.pickle'
+
+      mutators = []
+      for m in mutator:
+          mutators.append(eval(m))
+
       syscalls_generator = Block(test_dir + consts.STRACE_DEFAULT, pickle_file).get_block()
       for syscalls_trace_tuple in syscalls_generator:
 
@@ -218,64 +224,82 @@ def configure_test(name, mutator, verbosity, trace_line=0, sniplen=5):
         # syscalls_trace_tuple[0] = syscalls_trace_tuple[0][i:]
         # syscalls_trace_tuple[1] = syscalls_trace_tuple[1][i:]
 
-        lines = identify_mutator.identify_lines(syscalls_trace_tuple[0])
+        # que = Queue.Queue()
+
+        threads_list = []
+        lines = []
+        i = 0
+        for m in mutators:
+            lines.append([])
+            t = Thread(target=m.identify_lines,
+                    args=(syscalls_trace_tuple[0], lines[i]))
+            t.start()
+            threads_list.append(t)
+            time.sleep(1)
+            i += 1
+
+        for thread in threads_list:
+            thread.join()
+            
         # for i in range(len(lines)):
         #   lines[i] += off_set
 
-        lines_count = len(lines)
+        for i in range(len(lines)):
+          lines_count = len(lines[i])
 
-        if (lines_count == 0):
-          print("{} did not find any simulation opportunities."
-                .format(mutator))
+          if (lines_count == 0):
+            print("{} did not find any simulation opportunities."
+                  .format(mutator[i]))
 
-        sections = config.sections()
-        mutator_flag = len(sections) - 1 
+          sections = config.sections()
+          mutator_flag = len(sections) - 1 
 
-        for j in range(lines_count):
-          config.add_section("request_handling_process"+str(j + mutator_flag))
-          config.set("request_handling_process"+str(j + mutator_flag), "event", None)
-          config.set("request_handling_process"+str(j + mutator_flag), "pid", None)
-          config.set("request_handling_process"+str(j + mutator_flag), "trace_file", test_dir + consts.STRACE_DEFAULT)
-          config.set("request_handling_process"+str(j + mutator_flag), "trace_start", 0)
-          config.set("request_handling_process"+str(j + mutator_flag), "trace_end", 0)
+          for j in range(lines_count):
+            config.add_section("request_handling_process"+str(j + mutator_flag))
+            config.set("request_handling_process"+str(j + mutator_flag), "event", None)
+            config.set("request_handling_process"+str(j + mutator_flag), "pid", None)
+            config.set("request_handling_process"+str(j + mutator_flag), "trace_file", test_dir + consts.STRACE_DEFAULT)
+            config.set("request_handling_process"+str(j + mutator_flag), "trace_start", 0)
+            config.set("request_handling_process"+str(j + mutator_flag), "trace_end", 0)
 
-          identified_syscall_list_index = lines[j]
+            identified_syscall_list_index = lines[i][j]
 
-          config.set("request_handling_process"+str(j + mutator_flag), "mutator", mutator)
+            config.set("request_handling_process"+str(j + mutator_flag),
+                    "mutator", mutator[i])
 
-          # we must multiply by 2 here because the mutator is looking at a list
-          # of parsed system call objects NOT the trace file itself.  This means
-          # index A in the list of system calls corresponds with line number (A * 2)
-          # in the trace file because including the rr event lines (which, again,
-          # are NOT present in the list of system call objects) DOUBLES the number
-          # of lines in the file
-          identified_trace_file_index = identified_syscall_list_index
-          identified_trace_line = syscalls_trace_tuple[1][identified_trace_file_index]
+            # we must multiply by 2 here because the mutator is looking at a list
+            # of parsed system call objects NOT the trace file itself.  This means
+            # index A in the list of system calls corresponds with line number (A * 2)
+            # in the trace file because including the rr event lines (which, again,
+            # are NOT present in the list of system call objects) DOUBLES the number
+            # of lines in the file
+            identified_trace_file_index = identified_syscall_list_index
+            identified_trace_line = syscalls_trace_tuple[1][identified_trace_file_index]
 
 
-          event_line = syscalls_trace_tuple[1][(identified_trace_file_index) - 1]
-          user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
-          # now we must generate a new trace snippet that will be used to drive the test.
-          # This snip will be sniplen (default 5) system calls in length and will have
-          # the rr event number lines from the main recording STRIPPED OUT.
-          lines_written = 0
+            event_line = syscalls_trace_tuple[1][(identified_trace_file_index) - 1]
+            user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
+            # now we must generate a new trace snippet that will be used to drive the test.
+            # This snip will be sniplen (default 5) system calls in length and will have
+            # the rr event number lines from the main recording STRIPPED OUT.
+            lines_written = 0
 
-          with open(test_dir + "trace_snip"+str(j + mutator_flag)+".strace", 'wb') as snip_file:
-            for i in range(0, sniplen * 2, 2):
-              try:
-                snip_file.write(syscalls_trace_tuple[1][identified_trace_file_index + i])
-                lines_written += 1
-              except IndexError:
-                break
+            with open(test_dir + "trace_snip"+str(j + mutator_flag)+".strace", 'wb') as snip_file:
+              for k in range(0, sniplen * 2, 2):
+                try:
+                  snip_file.write(syscalls_trace_tuple[1][identified_trace_file_index + k])
+                  lines_written += 1
+                except IndexError:
+                  break
 
-          config.set("request_handling_process"+str(j + mutator_flag), "trace_file", test_dir + "trace_snip"+str(j + mutator_flag) + ".strace")
-          config.set("request_handling_process"+str(j + mutator_flag), "event", user_event)
-          config.set("request_handling_process"+str(j + mutator_flag), "pid", pid)
-          config.set("request_handling_process"+str(j + mutator_flag), "trace_end", lines_written)
+            config.set("request_handling_process"+str(j + mutator_flag), "trace_file", test_dir + "trace_snip"+str(j + mutator_flag) + ".strace")
+            config.set("request_handling_process"+str(j + mutator_flag), "event", user_event)
+            config.set("request_handling_process"+str(j + mutator_flag), "pid", pid)
+            config.set("request_handling_process"+str(j + mutator_flag), "trace_end", lines_written)
 
-          # write final changes to config file
-          with open(test_dir + "config.ini", 'w+') as config_file:
-            config.write(config_file)
+            # write final changes to config file
+            with open(test_dir + "config.ini", 'w+') as config_file:
+              config.write(config_file)
     return 1
 
 def list_test():
@@ -364,7 +388,8 @@ def main():
                                help='number of lines to create a strace snippet')
   configure_group.add_argument('-m', '--mutator',
                                dest='mutator',
-                               help='mutator to use')
+                               help='mutator to use',
+                               nargs='+')
 
   # ./rrtest list
   list_group.set_defaults(cmd='list')

@@ -15,7 +15,7 @@ class Block:
   def _read_file(self, file_handle):
     syscalls_list = []
     trace_lines_list = []
-    for i in range(20):
+    for i in range(1000):
       try:
         trace_line = file_handle.next()
       except StopIteration:

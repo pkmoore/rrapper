@@ -11,9 +11,7 @@ class ReverseTimeMutator(GenericMutator):
       if v.name == 'time':
         syscalls[k].ret = (syscalls[k].ret[0] - self.seconds, '')
 
-  def identify_lines(self, syscalls):
-    lines = []
+  def identify_lines(self, syscalls, lines):
     for k, v in enumerate(syscalls):
       if v != None and v.name == 'time':
         lines.append(k)
-    return lines

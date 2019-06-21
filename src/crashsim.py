@@ -44,7 +44,8 @@ def main():
   test_name.add_argument('-m', '--mutator',
                                dest='mutator',
                                required=True,
-                               help='mutator to use')
+                               help='mutator to use',
+                               nargs='+')
   test_name.add_argument('-c', '--command',
                                dest='command',
                                required=True,

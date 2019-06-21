@@ -37,19 +37,17 @@ class UnusualFiletypeMutator(GenericMutator):
             continue
         return k
 
-  def identify_lines(self, syscalls):
-    lines = []
+  def identify_lines(self, syscalls, lines):
     for k, v in enumerate(syscalls):
       # fstat takes a file descriptor
-      if v.name.startswith('fstat'):
+      if v != None and v.name.startswith('fstat'):
         if self.file_descriptor:
           if self.file_descriptor != v.args[0].value:
             continue
         lines.append(k)
       # stat and lstat take a name rather than a file descriptor
-      if v.name.startswith('stat') or v.name.startswith('lstat'):
+      if v != None and v.name.startswith('stat') or v != None and v.name.startswith('lstat'):
         if self.name:
           if self.name != v.args[0].value:
             continue
         lines.append(k)
-    return lines
