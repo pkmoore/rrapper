@@ -169,12 +169,6 @@ def get_configuration(ini_path):
   # clean up any brk() kernel mapping files that might already exist
   # for each of the subjects
 
-  for i in subjects:
-    try:
-      os.remove(s['rec_pid'] + '_brks.json')
-    except OSError:
-      pass
-
   return rr_dir, subjects
 
 
@@ -287,11 +281,15 @@ def process_messages(subjects):
   subjects_handled = set()
   while len(subjects_handled) < len(subjects):
     message = get_message(consts.RR_PIPE)
+    try:
+      message_dict = json.loads(message)
+    except ValueError as e:
+      logger.error('Got badly formatted message from rr:\n{}'.format(message))
+      raise e
     logger.debug("Parsing retrieved message: {}".format(message))
-    parts = message.split(' ')
-    inject = parts[0].strip()[:-1]
-    event = parts[2]
-    pid = parts[4]
+    inject = message_dict['inject']
+    event = message_dict['event']
+    pid = message_dict['pid']
 
     # Get all the subjects we can apply at a given event
     subjects_for_event = []
@@ -310,7 +308,7 @@ def process_messages(subjects):
       print('waiting...')
 
     # checking inject state
-    if inject == 'INJECT':
+    if inject == 'true':
       logger.debug("PID {} is being injected".format(pid))
 
       # Here we generate specific config file for a subject+process set pair.
@@ -330,7 +328,11 @@ def process_messages(subjects):
         tmp = json.load(d)
         # Add a pid field to the dict we loaded from the event-level config
         tmp['pid'] = pid
-        # Generate a unique name for new subject+pid specific config
+        # Generate a unique name for new subject+pid specific config.
+        # Because we're injecting, we should have received kernel mappings
+        # for brk() calls.  We must supply these to the uservisor as well
+        # via the pid_unique statefile.
+        tmp['brks'] = message_dict['brks']
         pid_unique_statefile = tmp['pid'] + '_' + eventwise_statefile
       with open(pid_unique_statefile, 'w') as d:
         json.dump(tmp, d)
@@ -345,7 +347,7 @@ def process_messages(subjects):
 
     # Otherwise, we just ask the subject to track these uninteresting processes
     # so we can clean them up after testing is done.
-    elif inject == 'DONT_INJECT':
+    elif inject == 'false':
       logger.debug("PID {} is not being injected".format(pid))
       s['other_procs'].append(pid)
 
