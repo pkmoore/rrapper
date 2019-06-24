@@ -235,7 +235,6 @@ def configure_test(name, mutator, verbosity, trace_line=0, sniplen=5):
                     args=(syscalls_trace_tuple[0], lines[i]))
             t.start()
             threads_list.append(t)
-            time.sleep(1)
             i += 1
 
         for thread in threads_list:
