@@ -1,6 +1,6 @@
 from mutator import GenericMutator
 from MutationError import MutationError
-
+import re
 
 class UnusualFiletypeMutator(GenericMutator):
   def __init__(self, filetype='S_IFREG', name=None, file_descriptor=None):
@@ -16,10 +16,10 @@ class UnusualFiletypeMutator(GenericMutator):
     # TODO: posix-omni-parser does not parse stat-like calls correctly.
     # This means we cannot be sure the st_mode member will always be in the same place.
     # As a result, we must iterate through all of the arguments to find it.
-    for i in syscalls[index].args:
-      if 'st_mode' in i:
+    for i in range(len(syscalls[index].args)):
+      if 'st_mode' in str(syscalls[index].args[i].value):
         # TODO: we only support replacing S_IFREG right now
-        syscalls[index].args[i].replace('S_IFREG', self.filetype)
+        syscalls[index].args[i].value=re.sub(r'S_IF(\w+)', self.filetype,syscalls[index].args[i].value)
 
 
   def _find_index(self, syscalls):
