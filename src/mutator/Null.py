@@ -7,5 +7,5 @@ class NullMutator(GenericMutator):
   def mutate_syscalls(self, syscalls):
     pass
 
-  def identify_lines(self, syscalls):
+  def identify_lines(self, syscalls, lines):
     return [self.index]

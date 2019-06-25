@@ -43,7 +43,6 @@ def main():
   test_name.set_defaults(cmd=sys.argv[1])
   test_name.add_argument('-m', '--mutator',
                                dest='mutator',
-                               required=True,
                                help='mutator to use',
                                nargs='+')
   test_name.add_argument('-c', '--command',
@@ -72,9 +71,16 @@ def main():
   logging.debug("----------creating test----------")
   create_test(args.cmd, args.command, args.force, args.verbosity)
 
+  # Set of default mutators
+  mutators = ["ReverseTimeMutator()", "FutureTimeMutator()",
+  "UnusualFiletypeMutator()", "CrossdiskRenameMutator()", "NullMutator()"]
+  
+  if args.mutator != None:
+      mutators = args.mutator
+
   # configuring the test
   logging.debug("----------configuring test----------")
-  configure_test(args.cmd, args.mutator, args.verbosity)
+  configure_test(args.cmd, mutators, args.verbosity)
   
   # replay the test
   logging.debug("----------replaying test----------")
