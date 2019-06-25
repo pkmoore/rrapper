@@ -32,7 +32,6 @@ import logging
 import shutil
 import errno
 import ConfigParser
-import Queue
 
 from posix_omni_parser import Trace
 from mutator.Null import NullMutator                        # noqa: F401
