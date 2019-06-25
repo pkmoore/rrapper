@@ -215,6 +215,9 @@ def process_messages(subjects):
   # parse message - retrieve PID, event number, inject state
   logger.debug("Parsing retrieved message: {}".format(message))
   while message != '':
+    print('------')
+    print(message)
+    print('------')
     parts = message.split(' ')
     inject = parts[0].strip()[:-1]
     event = parts[2]

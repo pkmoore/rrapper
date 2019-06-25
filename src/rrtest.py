@@ -204,8 +204,6 @@ def configure_test(name, mutator, verbosity, trace_line=0, sniplen=5):
       pid = trace_file.readline().split()[0]
 
     if mutator:
-      #config.set("request_handling_process", "mutator", args.mutator)
-      # use the mutator to identify the line we are interested in
       pickle_file = consts.DEFAULT_CONFIG_PATH + 'syscall_definitions.pickle'
 
       mutators = []
@@ -213,42 +211,58 @@ def configure_test(name, mutator, verbosity, trace_line=0, sniplen=5):
           mutators.append(eval(m))
 
       syscalls_generator = Block(test_dir + consts.STRACE_DEFAULT, pickle_file).get_block()
+
+      # Flag for identifying the deletion of 'syscall_'
+      deleted_syscall = 0
+
       for syscalls_trace_tuple in syscalls_generator:
 
-        # # ignore syscalls before the 'syscall_xxx()' marker
-        # for i in range(len(syscalls_trace_tuple)):
-        #   if syscalls_trace_tuple[0][i] != None and 'syscall_' in syscalls_trace_tuple[0][i].name:
-        #     break
+        # ignore syscalls before the 'syscall_xxx()' marker
+        if deleted_syscall != 1:
+          for i in range(len(syscalls_trace_tuple[0])):
+            if syscalls_trace_tuple[0][i] != None and 'syscall_' in syscalls_trace_tuple[0][i].name:
+              deleted_syscall = 1 
+              logging.debug('Found "syscall_xxx"')
+              syscalls_trace_tuple[0] = syscalls_trace_tuple[0][i:]
+              syscalls_trace_tuple[1] = syscalls_trace_tuple[1][i:]
+              break
+          if deleted_syscall != 1:
+              continue
 
-        # off_set = i
-        # syscalls_trace_tuple[0] = syscalls_trace_tuple[0][i:]
-        # syscalls_trace_tuple[1] = syscalls_trace_tuple[1][i:]
-
-        # que = Queue.Queue()
-
+        # skip each syscalls that we marked as None
+        syscalls_without_none = []
+        for syscall in syscalls_trace_tuple[0]:
+            if syscall != None:
+                syscalls_without_none.append(syscall)
+                
+        # each mutator runs in its own thread, and writes the identified lines
+        # in the 2d array 'lines'
         threads_list = []
         lines = []
         i = 0
         for m in mutators:
             lines.append([])
+            #t = Thread(target=m.identify_lines,
+                    #args=(syscalls_trace_tuple[0], lines[i]))
             t = Thread(target=m.identify_lines,
-                    args=(syscalls_trace_tuple[0], lines[i]))
+                    args=(syscalls_without_none, lines[i]))
             t.start()
             threads_list.append(t)
             i += 1
 
+        # wait for each thread to finish
         for thread in threads_list:
             thread.join()
             
-        # for i in range(len(lines)):
-        #   lines[i] += off_set
-
+        # for every mutator, write the config file and trace snip based on the
+        # lines found
         for i in range(len(lines)):
           lines_count = len(lines[i])
 
           if (lines_count == 0):
-            print("{} did not find any simulation opportunities."
+            logging.debug("{} did not find any simulation opportunities."
                   .format(mutator[i]))
+            break
 
           sections = config.sections()
           mutator_flag = len(sections) - 1 
@@ -261,7 +275,7 @@ def configure_test(name, mutator, verbosity, trace_line=0, sniplen=5):
             config.set("request_handling_process"+str(j + mutator_flag), "trace_start", 0)
             config.set("request_handling_process"+str(j + mutator_flag), "trace_end", 0)
 
-            identified_syscall_list_index = lines[i][j]
+            identified_syscall_list_index = lines[i][j] * 2
 
             config.set("request_handling_process"+str(j + mutator_flag),
                     "mutator", mutator[i])
