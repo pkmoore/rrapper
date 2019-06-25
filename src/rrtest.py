@@ -267,17 +267,7 @@ def configure_test(name, mutator, verbosity, trace_line=0, sniplen=5):
           mutator_flag = len(sections) - 1 
 
           for j in range(lines_count):
-            config.add_section("request_handling_process"+str(j + mutator_flag))
-            config.set("request_handling_process"+str(j + mutator_flag), "event", None)
-            config.set("request_handling_process"+str(j + mutator_flag), "pid", None)
-            config.set("request_handling_process"+str(j + mutator_flag), "trace_file", test_dir + consts.STRACE_DEFAULT)
-            config.set("request_handling_process"+str(j + mutator_flag), "trace_start", 0)
-            config.set("request_handling_process"+str(j + mutator_flag), "trace_end", 0)
-
             identified_syscall_list_index = lines[i][j] * 2
-
-            config.set("request_handling_process"+str(j + mutator_flag),
-                    "mutator", mutator[i])
 
             # we must multiply by 2 here because the mutator is looking at a list
             # of parsed system call objects NOT the trace file itself.  This means
@@ -304,10 +294,14 @@ def configure_test(name, mutator, verbosity, trace_line=0, sniplen=5):
                 except IndexError:
                   break
 
-            config.set("request_handling_process"+str(j + mutator_flag), "trace_file", test_dir + "trace_snip"+str(j + mutator_flag) + ".strace")
+            config.add_section("request_handling_process"+str(j + mutator_flag))
             config.set("request_handling_process"+str(j + mutator_flag), "event", user_event)
             config.set("request_handling_process"+str(j + mutator_flag), "pid", pid)
+            config.set("request_handling_process"+str(j + mutator_flag), "trace_file", test_dir + "trace_snip"+str(j + mutator_flag) + ".strace")
+            config.set("request_handling_process"+str(j + mutator_flag), "trace_start", 0)
             config.set("request_handling_process"+str(j + mutator_flag), "trace_end", lines_written)
+            config.set("request_handling_process"+str(j + mutator_flag),
+                    "mutator", mutator[i])
 
             # write final changes to config file
             with open(test_dir + "config.ini", 'w+') as config_file:
