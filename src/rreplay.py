@@ -243,11 +243,11 @@ def process_messages(subjects):
     This is where the magic happens.  This function retrieves messages from rr
     via the named pipe we created earlier (rrdump_proc.pipe).  rr posts a set
     of these messages to the pipe every time it generates a process set.  These
-    messages tell us to either INJECT or DONT_INJECT each process in a process
+    messages tell us whether or not to use a process in a process set for testing
     set based on whether the process is on in which we will allow a mutator to
     simulate an anomaly.
 
-    Processes that are marked as INJECT result in a copy of the crashsim process
+    Processes that with inject == true result in a copy of the crashsim process
     supervisor code in inject.py being launched.  From here, this code attaches
     to the process set in question and simulates an anomaly using the mutator
     assigned to the process set.
@@ -258,7 +258,7 @@ def process_messages(subjects):
     to a real process set so the process supervisor (inject.py) knows to
     what it should attach.
 
-    Processes that are marked as DONT_INJECT are added to the test subject
+    Processes that with inject == false are added to the test subject
     associated with the process set's "other processes" list so we can keep
     track of them and kill them off after testing has finished.
 
@@ -269,12 +269,11 @@ def process_messages(subjects):
   """
 
 
-  # we want to loop until all of our test subjects have been associated
-  # with a process set from rr.  As a result, we must track how many subjects
-  # we have handled.  Because we will get multiple messages per process set,
-  # this loop will run many times per subject (once or each process in its process set)
-  subjects_handled = set()
-  while len(subjects_handled) < len(subjects):
+  sub_idx = 0
+  # We loop through all subjects in our configuration file
+  # Ideally we will always receive one message per subject
+  # and rr and loop will stay in sync
+  while sub_idx < len(subjects):
     message = get_message(consts.RR_PIPE)
     try:
       message_dict = json.loads(message)
@@ -285,15 +284,6 @@ def process_messages(subjects):
     inject = message_dict['inject']
     event = message_dict['event']
     pid = message_dict['pid']
-
-    # Get all the subjects we can apply at a given event
-    subjects_for_event = []
-    for i in subjects:
-      # From our total list of subjects, we want to get only ones whose
-      # event corresponds to what rr has just generated (i.e. its events == event)
-      # and only if we have not already assigned it to a process set
-      if i['event'] == event and (i['event'], i['mutator']) not in subjects_handled:
-        subjects_for_event.append(i)
 
     # rr has reported that it generated a process for us as part
     # of creating a process set.  We want to wait to confirm this process
@@ -306,19 +296,39 @@ def process_messages(subjects):
     if inject == 'true':
       logger.debug("PID {} is being injected".format(pid))
 
-      # Here we generate specific config file for a subject+process set pair.
-      try:
-        # First we grab the next subject that can simulate an anomaly at this
-        # rr event
-        s = subjects_for_event.pop()
-      except IndexError:
-        logger.warning('rr generated an extra process for which we have no subject')
-        logger.warning('We will ignore it but the zombie will remain running')
+      # The event for which we received a message is in the past
+      # based on where we are in our list of subjects.
+      # i.e. we received a message for event 38 but the next one we are expecting
+      # is a message for event 140.  rr is misbehaving but we can ignore this message,
+      # inform the user, and let testing continue.  The process for the erroneous message
+      # will need to be cleaned up manually.
+      if event < subjects[sub_idx]['event']:
+        logger.error('rr generated a process set for event {} which is earlier.'
+                     'Than the next event we were expecting ({})'
+                     .format(event, subjects[sub_idx]['event']))
+        logger.error('Ignoring this message')
         continue
-      # mark the subject as handled so we don't grab it again above
-      subjects_handled.add((s['event'], s['mutator']))
+
+      # The event for which we received a message is in the future from the
+      # perspective of the list of events we are waiting on.  i.e. we were expecting
+      # a message for event 140 but got a message for event 178.  Because rr always
+      # sends these messages in order, we know rr is AHEAD of us now, we will not receive
+      # messages earlier than 178, and we should skip events in order to catch up or
+      # pass rr so we're back in sync again.  This will result in subjects that don't
+      # end up with a process handle meaning tests will be skipped
+
+      elif event > subjects[sub_idx]['event']:
+        logger.error('rr generated a process set for event {} which is in the future'
+                     'compared The next event we were expecting ({})'
+                     .format(event, subjects[sub_idx]['event']))
+        logger.error('We must fast foward through subjects to catch up with rr')
+        # Do the fast forwarding
+        while event > subjects[sub_idx]['event'] and sub_idx < len(subjects):
+          sub_idx += 1
+
+
       # Load the event-level config for the subject we're working on
-      eventwise_statefile = s['injected_state_file']
+      eventwise_statefile = subjects[sub_idx]['injected_state_file']
       with open(eventwise_statefile, 'r') as d:
         tmp = json.load(d)
         # Add a pid field to the dict we loaded from the event-level config
@@ -336,7 +346,7 @@ def process_messages(subjects):
                    .format(pid_unique_statefile))
       # Kick off the process supervisor supplying it with the subject+pid
       # specific config we just generated we just generated.
-      s['handle'] = subprocess.Popen(['inject',
+      subjects[sub_idx]['handle'] = subprocess.Popen(['inject',
                                       '--verbosity=40',
                                       pid_unique_statefile])
 
@@ -344,7 +354,8 @@ def process_messages(subjects):
     # so we can clean them up after testing is done.
     elif inject == 'false':
       logger.debug("PID {} is not being injected".format(pid))
-      s['other_procs'].append(pid)
+      subjects[sub_idx]['other_procs'].append(pid)
+    sub_idx += 1
 
 
 
