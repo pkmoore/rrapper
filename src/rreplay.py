@@ -263,11 +263,6 @@ def process_messages(subjects):
     track of them and kill them off after testing has finished.
 
 
-    A message on the pipe looks like:
-    INJECT: EVENT: <event number> PID: <pid> REC_PID: <rec_pid>\n
-    or
-    DONT_INJECT: EVENT: <event number> PID: <pid> REC_PID: <rec_pid>\n
-
   <Returns>
     None
 
