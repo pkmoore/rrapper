@@ -326,7 +326,6 @@ def process_messages(subjects):
         while event > subjects[sub_idx]['event'] and sub_idx < len(subjects):
           sub_idx += 1
 
-
       # Load the event-level config for the subject we're working on
       eventwise_statefile = subjects[sub_idx]['injected_state_file']
       with open(eventwise_statefile, 'r') as d:
@@ -347,8 +346,8 @@ def process_messages(subjects):
       # Kick off the process supervisor supplying it with the subject+pid
       # specific config we just generated we just generated.
       subjects[sub_idx]['handle'] = subprocess.Popen(['inject',
-                                      '--verbosity=40',
-                                      pid_unique_statefile])
+                                                      '--verbosity=40',
+                                                      pid_unique_statefile])
 
     # Otherwise, we just ask the subject to track these uninteresting processes
     # so we can clean them up after testing is done.
@@ -433,8 +432,8 @@ def call_replay(test_name, verbosity):
   # check if user-specified test exists
   test_dir = consts.DEFAULT_CONFIG_PATH + test_name
   if not os.path.exists(test_dir):
-    print("Test {} does not exist. Create before attempting to configure!" \
-            .format(test_name))
+    print("Test {} does not exist. Create before attempting to configure!"
+          .format(test_name))
     sys.exit(1)
 
   # read config.ini from the test directory
