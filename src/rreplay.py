@@ -87,7 +87,7 @@ def get_configuration(ini_path):
     The contents of this config are broken down into subjects which are used
     both to create smaller "event configs" by
     create_event_configuration_files() and to track which tests have been
-    completed in wait_for_handles().
+    completed in wait_on_handles().
 
     These subjects are sorted by event number so rr receives them in "event-
     chronological" order as we cannot ask rr to go backwards when we run it in
