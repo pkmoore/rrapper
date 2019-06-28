@@ -288,35 +288,38 @@ class TestProcessMessages(unittest.TestCase):
                                    '120_180_NullMutator(90)_state.json'])
 
 
-#pylint disable=line-too-long
-#class TestWaitOnHandles(unittest.TestCase):
-#    """ Test wait_on_handles helper function
-#    """
-#
-#    @mock.patch('subprocess.Popen')
-#    @mock.patch('subprocess.Popen.wait')
-#    @mock.patch('os.kill')
-#    @mock.patch('signal.SIGKILL')
-#    def test_injector_success(self, mock_sigkill, mock_kill, mock_wait, mock_popen):
-#        """ Test handle wait for subjects successfully
-#        """
-#        s_handle = mock_popen(['python', 'test.py'])
-#        subjects = [{'handle': s_handle, 'rec_pid': '123', 'event': '123', 'other_procs': [111, 112, 113, 114]}]
-#
-#        wait_on_handles(subjects)
-#        mock_wait.assert_called_with(subjects[0]['handle'])
-#        # test os.kill mock on last PID
-#        mock_kill.assert_called_with(114, mock_sigkill)
-#
-#
-#    @mock.patch('os.kill')
-#    @mock.patch('signal.SIGKILL')
-#    def test_injector_fail(self, mock_sigkill, mock_kill):
-#        """ Test failed injector on because of no handles
-#        """
-#        subjects = [{'rec_pid': '123', 'event': '123', 'other_procs': [111, 112, 113, 114]}]
-#
-#        wait_on_handles(subjects)
-#        # test os.kill mock on last PID
-#        mock_kill.assert_called_with(114, mock_sigkill)
-#pylint enable=line-too-long
+class TestWaitOnHandles(unittest.TestCase):
+    """ Test wait_on_handles helper function
+    """
+
+    @mock.patch('subprocess.Popen')
+    @mock.patch('os.kill')
+    @mock.patch('signal.SIGKILL')
+    def test_correct_wait_for_subject(self, mock_sigkill, mock_kill, mock_popen):
+        """ We should wait on a subject's handle until inject.py completes
+        """
+        s_handle = mock_popen(['python', 'test.py'])
+        s_handle.wait = mock.Mock()
+        subjects = [{'handle': s_handle, 'rec_pid': '123', 'event': '123', 'other_procs': [111, 112, 113, 114]}]
+
+        wait_on_handles(subjects)
+        s_handle.wait.assert_called_with()
+
+
+
+    @mock.patch('subprocess.Popen')
+    @mock.patch('os.kill')
+    @mock.patch('signal.SIGKILL')
+    def test_kill_other_procs(self, mock_sigkill, mock_kill, mock_popen):
+        """ We should kill all 'other procs' for a subject we are waiting on
+        """
+        s_handle = mock_popen(['python', 'test.py'])
+        s_handle.wait = mock.Mock()
+        subjects = [{'handle': s_handle, 'rec_pid': '123', 'event': '123', 'other_procs': [111, 112, 113, 114]}]
+
+        wait_on_handles(subjects)
+        # test os.kill mock on last PID
+        mock_kill.assert_has_calls([mock.call(111, mock_sigkill),
+                                    mock.call(112, mock_sigkill),
+                                    mock.call(113, mock_sigkill),
+                                    mock.call(114, mock_sigkill)])
