@@ -387,7 +387,7 @@ def wait_on_handles(subjects):
     #  If a subject has any uninteresting "other processes" associated with it,
     #  we kill them here.
     for i in s['other_procs']:
-      logger.debug("{} to be killed.".format(s['other_procs'][i]))
+      logger.debug("{} to be killed.".format(s['other_procs']))
       try:
         os.kill(int(i), signal.SIGKILL)
       except OSError:
