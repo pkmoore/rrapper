@@ -1,4 +1,4 @@
-from mutator import GenericMutator
+from mutator import GenericMutator 
 from MutationError import MutationError
 import re
 
@@ -19,7 +19,7 @@ class UnusualFiletypeMutator(GenericMutator):
     for i in range(len(syscalls[index].args)):
       if 'st_mode' in str(syscalls[index].args[i].value):
         # TODO: we only support replacing S_IFREG right now
-        syscalls[index].args[i].value=re.sub(r'S_IF(\w+)', self.filetype,syscalls[index].args[i].value)
+        syscalls[index].args[i].value=re.sub(r'S_IF(\w*)', self.filetype, syscalls[index].args[i].value)
 
 
   def _find_index(self, syscalls):
