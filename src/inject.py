@@ -470,8 +470,12 @@ def exit_with_status(pid, code, mutator, event, index = 0):
 
   _kill_parent_process(pid)
   if code != 0:
-    traceback.print_exc()
+    #traceback.print_exc()
     print('\n{}() mutating event No.{} failed to complete trace, resulting in errors in event No.{}.\n'.format(mut[0], event, error))
+    with open(consts.DEFAULT_CONFIG_PATH + 'data.txt', 'a+') as outfile:
+      data = {'mutator' : mut[0] ,'event' : event}
+      outfile.write("\n")
+      json.dump(data,outfile)
   else:
     print('\n{}() mutating event number {} finished replay without deltas.\n'.format(mut[0], event))
   sys.exit(code)
