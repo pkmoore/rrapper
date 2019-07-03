@@ -238,7 +238,7 @@ def execute_rr(rr_dir, subjects):
 
 
 
-def process_messages(subjects):
+def process_messages(subjects,test_name):
   """
   <Purpose>
     This is where the magic happens.  This function retrieves messages from rr
@@ -348,7 +348,8 @@ def process_messages(subjects):
       # specific config we just generated we just generated.
       subjects[sub_idx]['handle'] = subprocess.Popen(['inject',
                                                       '--verbosity=40',
-                                                      pid_unique_statefile])
+                                                      pid_unique_statefile,
+                                                      '-t', test_name])
 
       # If the subject we just handled is the last one to use a given
       # event configuration file, we should clean up that file.
@@ -456,7 +457,7 @@ def call_replay(test_name, verbosity):
   execute_rr(rr_dir, subjects)
 
   # process pipe messages
-  process_messages(subjects)
+  process_messages(subjects,test_name)
 
   # wait on handles
   wait_on_handles(subjects)

@@ -454,7 +454,7 @@ def apply_mmap_backing_files():
 
 
 
-def exit_with_status(pid, code, mutator, event, index = 0):
+def exit_with_status(pid, code, mutator, event, test_name, index = 0):
   """
   <Purpose>
     Method that ensures that the injector is safely exited by
@@ -472,7 +472,7 @@ def exit_with_status(pid, code, mutator, event, index = 0):
   if code != 0:
     #traceback.print_exc()
     print('\n{}() mutating event No.{} failed to complete trace, resulting in errors in event No.{}.\n'.format(mut[0], event, error))
-    with open(consts.DEFAULT_CONFIG_PATH + 'data.txt', 'a+') as outfile:
+    with open(consts.DEFAULT_CONFIG_PATH + test_name + '/error_report.txt', 'a+') as outfile:
       data = {'mutator' : mut[0] ,'event' : event}
       outfile.write("\n")
       json.dump(data,outfile)
@@ -497,6 +497,11 @@ def main():
                       type=int,
                       default=40,
                       help='flag for displaying debug information')
+
+  parser.add_argument('-t', '--testname',
+                      dest='test_name',
+                      type=str,
+                      help='test folder name')
 
   # parser arguments
   args = parser.parse_args()
@@ -567,7 +572,7 @@ def main():
                            syscall_object,
                            syscallreplay.entering_syscall)
     except:
-      exit_with_status(pid, 1, str(mutator), event_number, syscallreplay.syscall_index)
+      exit_with_status(pid, 1, str(mutator), event_number, args.test_name, syscallreplay.syscall_index)
 
     # call transition() if checker is implemented
     if checker:
@@ -589,7 +594,7 @@ def main():
         else:
           print('{} not accepted'.format(checker))
         print('####  End Checker Status  ####')
-      exit_with_status(pid, 0, str(mutator), event_number)
+      exit_with_status(pid, 0, str(mutator), event_number,args.test_name)
 
 
 
