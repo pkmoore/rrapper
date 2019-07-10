@@ -99,7 +99,9 @@ class TestProcessMessages(unittest.TestCase):
                                                  "event": "140",
                                                  "other_procs": []})
   @mock.patch('rreplay.subprocess.Popen', return_value=bunch.Bunch)
+  @mock.patch('rreplay.os.unlink')
   def test_good_json_message_do_inject(self,
+                                       mock_unlink,
                                        mock_popen,
                                        mock_json_load,
                                        mock_open,
@@ -127,6 +129,7 @@ class TestProcessMessages(unittest.TestCase):
     mock_popen.assert_called_with(['inject',
                                    '--verbosity=40',
                                    '120_140_NullMutator(70)_state.json'])
+    mock_unlink.assert_called_with('140_NullMutator(70)_state.json')
 
 
   @mock.patch('rreplay.get_message', return_value='''{
@@ -250,7 +253,9 @@ class TestProcessMessages(unittest.TestCase):
                                                  "event": "180",
                                                  "other_procs": []})
   @mock.patch('rreplay.subprocess.Popen', return_value=bunch.Bunch)
+  @mock.patch('rreplay.os.unlink')
   def test_message_is_for_future_event(self,
+                                       mock_unlink,
                                        mock_popen,
                                        mock_json_load,
                                        mock_open,
@@ -286,6 +291,7 @@ class TestProcessMessages(unittest.TestCase):
     mock_popen.assert_called_with(['inject',
                                    '--verbosity=40',
                                    '120_180_NullMutator(90)_state.json'])
+    mock_unlink.assert_called_with('180_NullMutator(90)_state.json')
 
 
 class TestWaitOnHandles(unittest.TestCase):

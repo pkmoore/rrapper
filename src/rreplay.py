@@ -137,7 +137,8 @@ def get_configuration(ini_path):
     s['mutator'] = cfg.get(i, 'mutator')
     # injected_state_file is the name we should give the event configuration
     # when we generate it later
-    s['injected_state_file'] = s['event'] + '_' + s['mutator'] + '_state.json'
+    event_file_name = s['event'] + '_' + s['mutator'] + '_state.json'
+    s['injected_state_file'] = event_file_name
 
     # Other procs are uninteresting processes in the subject's associated
     # process set.  We can populate this list once we receive messages from
@@ -348,6 +349,16 @@ def process_messages(subjects):
       subjects[sub_idx]['handle'] = subprocess.Popen(['inject',
                                                       '--verbosity=40',
                                                       pid_unique_statefile])
+
+      # If the subject we just handled is the last one to use a given
+      # event configuration file, we should clean up that file.
+
+      future_subjects = subjects[sub_idx + 1:]
+      subjects_still_using_event_config = [x for
+                                           x in future_subjects
+                                           if x['injected_state_file'] == eventwise_statefile]
+      if not subjects_still_using_event_config:
+        os.unlink(eventwise_statefile)
 
     # Otherwise, we just ask the subject to track these uninteresting processes
     # so we can clean them up after testing is done.
