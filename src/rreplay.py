@@ -303,10 +303,10 @@ def process_messages(subjects):
       # inform the user, and let testing continue.  The process for the erroneous message
       # will need to be cleaned up manually.
       if event < subjects[sub_idx]['event']:
-        logger.error('rr generated a process set for event {} which is earlier.'
-                     'Than the next event we were expecting ({})'
+        logger.error('rr generated a process set for event {} which is earlier '
+                     'than the next event we were expecting ({})'
                      .format(event, subjects[sub_idx]['event']))
-        logger.error('Ignoring this message')
+        logger.error('Ignoring this process set')
         continue
 
       # The event for which we received a message is in the future from the
