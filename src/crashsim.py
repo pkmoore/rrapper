@@ -62,7 +62,8 @@ def main():
 
   parser.add_argument('-m', '--mutator',
                       dest='mutator',
-                      nargs='+',
+                      # nargs='+',
+                      required=True,
                       help='''define the mutator to be applied to the test, if
                       no mutator given then a default set will be run.''')
 
@@ -103,9 +104,9 @@ def main():
     test_dir = consts.DEFAULT_CONFIG_PATH + args.name
 
   # Set of default mutators
-  if args.mutator == None:
-    args.mutator = ["ReverseTimeMutator()", "FutureTimeMutator()",
-                    "UnusualFiletypeMutator()", "CrossdiskRenameMutator()", "NullMutator()"]
+  # if args.mutator == None:
+  #   args.mutator = ["ReverseTimeMutator()", "FutureTimeMutator()",
+  #                   "UnusualFiletypeMutator()", "CrossdiskRenameMutator()", "NullMutator()"]
   
   print(args)
   # configure logger
