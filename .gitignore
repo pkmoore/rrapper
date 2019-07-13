@@ -10,4 +10,5 @@ strace_out.strace
 crashsim/*
 build/*
 dist/*
+examples/*/*.bin
 *.egg-info/*

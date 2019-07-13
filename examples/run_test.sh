@@ -1,13 +1,15 @@
 NAME=$1
-TARGET=${NAME}/${NAME}
-CONFIG_PATH=${TARGET}/${NAME}.ini
-C_PATH=${TARGET}/${NAME}.c
+TARGET=${NAME}/${NAME}.bin
+
+CONFIG_PATH=${NAME}/${NAME}.ini
+C_PATH=${NAME}/${NAME}.c
 
 # build if C path exists
+if [ -f "$C_PATH" ]; then
+    echo "Building test ${NAME}..."
+    gcc -m32 -static $C_PATH -o $TARGET
+fi
 
-# execute rrtest on binary 
-
-echo "Running test ${NAME}..."
-
+echo "Replaying test ${NAME}..."
 
 
