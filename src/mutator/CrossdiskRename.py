@@ -15,12 +15,10 @@ class CrossdiskRenameMutator(GenericMutator):
           syscalls[k].ret = (-1, 'EXDEV')
 
 
-  def identify_lines(self, syscalls):
-    lines = []
+  def identify_lines(self, syscalls, lines):
     for k, v in enumerate(syscalls):
       if v.name == 'rename':
         if self.name:
           if v.args[0].value != self.name:
             continue
         lines.append(k)
-    return lines
