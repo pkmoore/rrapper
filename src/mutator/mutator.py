@@ -1,6 +1,17 @@
 import tempfile
 
 class GenericMutator:
+  def __init__(self):
+    self.oppotunities = []
+
+  def next_syscall(self):
+    while (syscall = tm.next_syscall()) is None:
+      threading.wait()
+    return sysycall
+  
+  def opportunity_identified(self, syscall, que):
+    que.put(syscall)
+
   def find_syscall_between_indexes(self, syscalls, start, end, pred_func):
     if start < 0: raise ValueError('Starting index must be > 0')
     if end < 0: raise ValueError('Ending index must be > 0')

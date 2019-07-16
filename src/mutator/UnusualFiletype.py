@@ -18,7 +18,6 @@ class UnusualFiletypeMutator(GenericMutator):
     # As a result, we must iterate through all of the arguments to find it.
     for i in range(len(syscalls[index].args)):
       if 'st_mode' in str(syscalls[index].args[i].value):
-        # TODO: we only support replacing S_IFREG right now
         syscalls[index].args[i].value=re.sub(r'S_IF(\w*)', self.filetype, syscalls[index].args[i].value)
 
 
@@ -37,19 +36,19 @@ class UnusualFiletypeMutator(GenericMutator):
             continue
         return k
 
-  def identify_lines(self, syscalls):
-    lines = []
-    for k, v in enumerate(syscalls):
+
+  def identify_lines(self, tm, que):
+    while v = self.next_syscall():
       # fstat takes a file descriptor
       if v.name.startswith('fstat'):
         if self.file_descriptor:
           if self.file_descriptor != v.args[0].value:
             continue
-        lines.append(k)
+        self.opportunity_identified(v, que)
       # stat and lstat take a name rather than a file descriptor
       if v.name.startswith('stat') or v.name.startswith('lstat'):
         if self.name:
           if self.name != v.args[0].value:
             continue
-        lines.append(k)
-    return lines
+        self.opportunity_identified(v, que):
+
