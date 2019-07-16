@@ -38,7 +38,10 @@ class UnusualFiletypeMutator(GenericMutator):
 
 
   def identify_lines(self, tm, que):
-    while v = self.next_syscall():
+    while true:
+      v = self.next_syscall()
+      if v is None:
+        break
       # fstat takes a file descriptor
       if v.name.startswith('fstat'):
         if self.file_descriptor:

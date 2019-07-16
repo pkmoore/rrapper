@@ -13,7 +13,10 @@ class FutureTimeMutator(GenericMutator):
 
 
   def identify_lines(self, tm, que):
-    while v = self.next_syscall():
+    while true:
+      v = self.next_syscall()
+      if v is None:
+        break
       if v.name == 'time':
         self.opportunity_identified(v, que)
  

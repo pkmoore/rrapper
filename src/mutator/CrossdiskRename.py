@@ -16,7 +16,10 @@ class CrossdiskRenameMutator(GenericMutator):
 
 
   def identify_lines(self, tm, que):
-    while v = self.next_syscall():
+    while true:
+      v = self.next_syscall()
+      if v is None:
+        break
       if v.name == 'rename':
         if self.name:
           if v.args[0].value != self.name:

@@ -5,7 +5,8 @@ class GenericMutator:
     self.oppotunities = []
 
   def next_syscall(self):
-    while (syscall = tm.next_syscall()) is None:
+    syscall = tm.next_syscall()
+    if syscall is None:
       threading.wait()
     return sysycall
   
