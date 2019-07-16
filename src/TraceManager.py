@@ -20,7 +20,7 @@ class TraceManager:
       self.mutators = []
 
   def register_mutator(self, mutator):
-      self.mutators.append({'name': mutator.name, 'index': mutator.index})
+      self.mutators.append({'name': mutator, 'index': 0})
 
   def next_syscall(self, calling_mutator):
       tmp_index = calling_mutator['index']

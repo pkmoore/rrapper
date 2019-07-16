@@ -14,6 +14,9 @@
 
 """
 
+import logging
+import sys
+
 from posix_omni_parser.parsers.StraceParser import StraceParser
 
 import consts
@@ -26,6 +29,17 @@ class Producer:
 
   def produce(self):
     with open(self.tracefile, 'r') as fh:
+      
+      # Finding and ignoring everything before 'syscall_'
+      while True:
+        try:
+          trace_line = fh.next()
+        except StopIteration:
+          logging.debug("Incomplete Trace. Trace ended without 'syscall_'")          
+          sys.exit(1)
+        syscall = self.parser.parse_line(trace_line)
+        if syscall and 'syscall_' in syscall.name:
+          break
 
       # before updating and deleting the syscall_objects simultaneously, first add an
       # intial amount of syscall_objects to the trace_manager
@@ -34,7 +48,8 @@ class Producer:
           trace_line = fh.next()
         except StopIteration:
           return
-        self.trace_manager.syscall_objects.append(self.parser.parse_line(trace_line))
+        syscall = self.parser.parse_line(trace_line)
+        self.trace_manager.syscall_objects.append(syscall)
         self.trace_manager.trace.append(trace_line)
 
 

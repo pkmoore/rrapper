@@ -18,6 +18,7 @@ import argparse
 import subprocess
 import logging
 from rrtest import create_test, configure_test, list_test, pack_test, analyze_test 
+from mutate import mutate
 from rreplay import call_replay
 
 def main():
@@ -44,6 +45,7 @@ def main():
   test_name.add_argument('-m', '--mutator',
                                dest='mutator',
                                required=True,
+                               nargs='+',
                                help='mutator to use')
   test_name.add_argument('-c', '--command',
                                dest='command',
@@ -73,7 +75,7 @@ def main():
 
   # configuring the test
   logging.debug("----------configuring test----------")
-  configure_test(args.cmd, args.mutator, args.verbosity)
+  mutate(args.cmd, args.mutator, args.verbosity)
   
   # replay the test
   logging.debug("----------replaying test----------")
