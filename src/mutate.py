@@ -6,8 +6,8 @@ import ConfigParser
 import TraceManager
 import Producer
 import Queue
+import threading
 
-from threading import Thread
 from posix_omni_parser import Trace
 from mutator.Null import NullMutator                        # noqa: F401
 from mutator.CrossdiskRename import CrossdiskRenameMutator  # noqa: F401
@@ -40,27 +40,40 @@ def mutate(name, mutators, verbosity):
     # use the mutator to identify the line we are interested in
     pickle_file = consts.DEFAULT_CONFIG_PATH + 'syscall_definitions.pickle'
     trace_manager = TraceManager.TraceManager()
-
-    # Instantiating consumers
-    identified_mutators = [] 
-    for mutator in mutators:
-      identified_mutators.append(eval(mutator))
-      trace_manager.register_mutator(mutator)
+    producing_syscall = threading.Condition()
+    opportunities = Queue.Queue()
 
     # Instantiating producer
     producer = Producer.Producer(test_dir + consts.STRACE_DEFAULT, pickle_file, trace_manager)
-    producer_thread = Thread(target=producer.produce, args=())
+    producer_thread = threading.Thread(target=producer.produce, args=(producing_syscall,))
     producer_thread.start()
 
-    producer_thread.join()
-    for syscall in trace_manager.syscall_objects:
-      print('===========')
-      print(syscall)
+   # producer_thread.join()
+   # for syscall in trace_manager.syscall_objects:
+   #   print('===========')
+   #   print(syscall)
+   # sys.exit(0)
+
+
+    # Instantiating consumers
+    mutator_threads = [] 
+    for mutator in mutators:
+      identify_mutator = eval(mutator)
+      thread = threading.Thread(target=identify_mutator.identify_lines,
+              args=(trace_manager, opportunities, producing_syscall, producer_thread))
+      thread.start()
+      mutator_threads.append(thread)
+      trace_manager.register_mutator(mutator.strip('()'))
+   
+    while mutator_threads[0].isAlive() or not opportunities.empty():
+      print('----------')
+      print(opportunities.get(True, 1))
+      print('**********')
+
+        
     sys.exit(0)
 
-    opportunities = Queue.Queue()
-
-    sections = config.sections()
+   # sections = config.sections()
 
    # config_number = 0
    # while not opportunities.empty():

@@ -37,21 +37,21 @@ class UnusualFiletypeMutator(GenericMutator):
         return k
 
 
-  def identify_lines(self, tm, que):
-    while true:
-      v = self.next_syscall()
-      if v is None:
-        break
-      # fstat takes a file descriptor
-      if v.name.startswith('fstat'):
-        if self.file_descriptor:
-          if self.file_descriptor != v.args[0].value:
-            continue
-        self.opportunity_identified(v, que)
-      # stat and lstat take a name rather than a file descriptor
-      if v.name.startswith('stat') or v.name.startswith('lstat'):
-        if self.name:
-          if self.name != v.args[0].value:
-            continue
-        self.opportunity_identified(v, que):
+  #def identify_lines(self, tm, que):
+  #  while True:
+  #    v = self.next_syscall()
+  #    if v is None:
+  #      break
+  #    # fstat takes a file descriptor
+  #    if v.name.startswith('fstat'):
+  #      if self.file_descriptor:
+  #        if self.file_descriptor != v.args[0].value:
+  #          continue
+  #      self.opportunity_identified(v, que)
+  #    # stat and lstat take a name rather than a file descriptor
+  #    if v.name.startswith('stat') or v.name.startswith('lstat'):
+  #      if self.name:
+  #        if self.name != v.args[0].value:
+  #          continue
+  #      self.opportunity_identified(v, que)
 

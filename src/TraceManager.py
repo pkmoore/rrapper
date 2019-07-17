@@ -23,12 +23,27 @@ class TraceManager:
       self.mutators.append({'name': mutator, 'index': 0})
 
   def next_syscall(self, calling_mutator):
-      tmp_index = calling_mutator['index']
+      mutator_index = -1
+      for i in range(len(self.mutators)):
+          if self.mutators[i]['name'] == calling_mutator:
+              mutator_index = i
+              break
+      if mutator_index == -1:
+          print('----')
+          print(self.mutators)
+          print('could not find the mutator')
+          print('----')
+      tmp_index = self.mutators[mutator_index]['index']
       tmp_index += 1
       try:
-          syscall_to_return = self.syscall_objects[calling_mutator['index']]
+          syscall = self.syscall_objects[tmp_index]
+          trace = self.trace[tmp_index]
+          event_num = self.trace[tmp_index]
+          syscall_trace_pack = {'syscall': syscall, 'event':event_num, 'trace':trace}
       except IndexError:
-          '''Block somehow'''
+          return None
+      self.mutators[mutator_index]['index'] += 1
+      return syscall_trace_pack
 
   def prev_syscall(self, calling_mutator):
       tmp_index = calling_mutator['index']

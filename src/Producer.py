@@ -27,7 +27,7 @@ class Producer:
     self.trace_manager = tm
     self.parser = StraceParser(self.tracefile, pickle_file)
 
-  def produce(self):
+  def produce(self, thread_condition):
     with open(self.tracefile, 'r') as fh:
       
       # Finding and ignoring everything before 'syscall_'
@@ -44,31 +44,39 @@ class Producer:
       # before updating and deleting the syscall_objects simultaneously, first add an
       # intial amount of syscall_objects to the trace_manager
       for i in range(3000):
-        try:
-          trace_line = fh.next()
-        except StopIteration:
-          return
-        syscall = self.parser.parse_line(trace_line)
-        self.trace_manager.syscall_objects.append(syscall)
-        self.trace_manager.trace.append(trace_line)
+        with thread_condition:
+          try:
+            trace_line = fh.next()
+          except StopIteration:
+            print("DEAD")
+            thread_condition.notify_all()
+            return
+            print("DEAD")
+          syscall = self.parser.parse_line(trace_line)
+          self.trace_manager.syscall_objects.append(syscall)
+          self.trace_manager.trace.append(trace_line)
+          thread_condition.notify()
 
 
       while True:
-        for i in self.trace_manager.mutators:
-          '''lock'''
+        print("INFINITE LOOP")
         backtrace_limit = 0
         for mutator in self.trace_manager.mutators:
           if mutator['index'] - 1000 < backtrace_limit:
             backtrace_limit = mutator['index'] - 1000
 
         if backtrace_limit > 0:
-          for i in range(backtrace_limit):
-            self.trace_manager.pop_front()
-          for i in range(backtrace_limit):
-            try:
-              trace_line = fh.next()
-            except StopIteration:
-              return
-            self.trace_manager.syscall_objects.append(self.parser.parse_line(trace_line))
+          with thread_condition:
+            for i in range(backtrace_limit):
+              self.trace_manager.pop_front()
+            for i in range(backtrace_limit):
+              try:
+                trace_line = fh.next()
+              except StopIteration:
+                thread_condition.notify_all()
+                return
+              self.trace_manager.syscall_objects.append(self.parser.parse_line(trace_line))
+              thread_condition.notify()
+
 
             
