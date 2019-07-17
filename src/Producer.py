@@ -28,6 +28,17 @@ class Producer:
     self.parser = StraceParser(self.tracefile, pickle_file)
 
   def produce(self, thread_condition):
+    """
+    <Purpose>
+      This method parses and adds syscalls to the list of syscalls in
+      TraceManager. It works like a sliding window that constantly updates the
+      list depending on where the slowest mutator is in that list
+
+    <Returns>
+      None
+
+    """
+
     with open(self.tracefile, 'r') as fh:
       
       # Finding and ignoring everything before 'syscall_'
@@ -42,7 +53,8 @@ class Producer:
           break
 
       # before updating and deleting the syscall_objects simultaneously, first add an
-      # intial amount of syscall_objects to the trace_manager
+      # intial amount of syscall_objects to the trace_manager in order for
+      # mutators to have an initial amout of backlogs
       for i in range(10):
         with thread_condition:
           try:
@@ -55,7 +67,9 @@ class Producer:
           self.trace_manager.trace.append(trace_line)
           thread_condition.notify()
 
-
+      # This part is the updating window. It deletes everything before the
+      # backlog of the slowest mutator and adds the same number of syscalls to
+      # the end
       while True:
         backtrace_limit = 99999999
         for mutator in self.trace_manager.mutators:

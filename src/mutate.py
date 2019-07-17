@@ -53,68 +53,49 @@ def mutate(name, mutators, verbosity):
     mutator_threads = [] 
     for mutator in mutators:
       identify_mutator = eval(mutator)
+      trace_manager.register_mutator(identify_mutator.name)
       thread = threading.Thread(target=identify_mutator.identify_lines,
               name='mutator', args=(trace_manager, opportunities, producing_syscall, producer_thread))
-      trace_manager.register_mutator(mutator.strip('()'))
       thread.start()
       mutator_threads.append(thread)
    
-    while mutator_threads[0].isAlive() or not opportunities.empty():
-      print('----------')
+    config_number = 0
+    while len(threading.enumerate()) > 1 or not opportunities.empty():
       try:
-        print(opportunities.get(True, 1))
+        identified_opportunity = opportunities.get(True, 1)
       except Queue.Empty:
         continue
-      print('**********')
 
-        
-    sys.exit(0)
+      syscall_trace_obj = identified_opportunity[0]
+      config.add_section("request_handling_process"+str(config_number))
+      config.set("request_handling_process"+str(config_number), "event", None)
+      config.set("request_handling_process"+str(config_number), "pid", None)
+      config.set("request_handling_process"+str(config_number), "trace_file", test_dir + consts.STRACE_DEFAULT)
+      config.set("request_handling_process"+str(config_number), "trace_start", 0)
+      config.set("request_handling_process"+str(config_number), "trace_end", 0)
+      config.set("request_handling_process"+str(config_number), "mutator",
+              identified_opportunity[1]+'()')
 
-   # config_number = 0
-   # while not opportunities.empty():
-   #   config.add_section("request_handling_process"+str(config_number))
-   #   config.set("request_handling_process"+str(config_number), "event", None)
-   #   config.set("request_handling_process"+str(config_number), "pid", None)
-   #   config.set("request_handling_process"+str(config_number), "trace_file", test_dir + consts.STRACE_DEFAULT)
-   #   config.set("request_handling_process"+str(config_number), "trace_start", 0)
-   #   config.set("request_handling_process"+str(config_number), "trace_end", 0)
+      event_line = syscall_trace_obj['event']
+      user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
+      # now we must generate a new trace snippet that will be used to drive the test.
+      # This snip will be sniplen (default 5) system calls in length and will have
+      # the rr event number lines from the main recording STRIPPED OUT.
+      lines_written = 0
 
-   #   identified_syscall_list_index = lines[j]
+      with open(test_dir + "trace_snip"+str(config_number)+".strace", 'wb') as snip_file:
+        snip_file.write(syscall_trace_obj['trace'])
+        lines_written += 1
 
-   #   config.set("request_handling_process"+str(config_number), "mutator", mutator)
+      config.set("request_handling_process"+str(config_number), "trace_file",
+              test_dir + "trace_snip"+str(config_number) + ".strace")
+      config.set("request_handling_process"+str(config_number), "event", user_event)
+      config.set("request_handling_process"+str(config_number), "pid", pid)
+      config.set("request_handling_process"+str(config_number), "trace_end", lines_written)
 
-   #   # we must multiply by 2 here because the mutator is looking at a list
-   #   # of parsed system call objects NOT the trace file itself.  This means
-   #   # index A in the list of system calls corresponds with line number (A * 2)
-   #   # in the trace file because including the rr event lines (which, again,
-   #   # are NOT present in the list of system call objects) DOUBLES the number
-   #   # of lines in the file
-   #   identified_trace_file_index = identified_syscall_list_index * 2
-   #   identified_trace_line = trace_lines[identified_trace_file_index]
+      # write final changes to config file
+      with open(test_dir + "config.ini", 'w+') as config_file:
+        config.write(config_file)
 
-
-   #   event_line = trace_lines[(identified_trace_file_index) - 1]
-   #   user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
-   #   # now we must generate a new trace snippet that will be used to drive the test.
-   #   # This snip will be sniplen (default 5) system calls in length and will have
-   #   # the rr event number lines from the main recording STRIPPED OUT.
-   #   lines_written = 0
-
-   #   with open(test_dir + "trace_snip"+str(config_number)+".strace", 'wb') as snip_file:
-   #     for i in range(0, 5 * 2, 2):
-   #       try:
-   #         snip_file.write(trace_lines[identified_trace_file_index + i])
-   #         lines_written += 1
-   #       except IndexError:
-   #         break
-
-   #   config.set("request_handling_process"+str(config_number), "trace_file",
-   #           test_dir + "trace_snip"+str(config_number) + ".strace")
-   #   config.set("request_handling_process"+str(config_number), "event", user_event)
-   #   config.set("request_handling_process"+str(config_number), "pid", pid)
-   #   config.set("request_handling_process"+str(config_number), "trace_end", lines_written)
-
-   #   # write final changes to config file
-   #   with open(test_dir + "config.ini", 'w+') as config_file:
-   #     config.write(config_file)
-   # return 1
+      config_number += 1
+    return 1

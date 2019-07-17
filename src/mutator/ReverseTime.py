@@ -4,7 +4,7 @@ from mutator import GenericMutator
 class ReverseTimeMutator(GenericMutator):
   def __init__(self, seconds=100):
       self.seconds = seconds
-
+      self.name = 'ReverseTimeMutator'
 
   def mutate_syscalls(self, syscalls):
     for k, v in enumerate(syscalls):
@@ -14,9 +14,9 @@ class ReverseTimeMutator(GenericMutator):
 
   def identify_lines(self, tm, que, thread_condition, producer):
     while True:
-      syscall_trace = self.next_syscall("ReverseTimeMutator", tm, thread_condition, producer)
+      syscall_trace = self.next_syscall(self.name, tm, thread_condition, producer)
       if not syscall_trace:
           return
       elif syscall_trace['syscall'].name == 'time':
-        self.opportunity_identified(syscall_trace, que)
+        self.opportunity_identified(syscall_trace, self.name, que)
   

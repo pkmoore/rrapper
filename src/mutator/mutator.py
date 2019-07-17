@@ -17,8 +17,8 @@ class GenericMutator:
         return self.next_syscall(calling_mutator, tm, thread_condition, producer)
       return syscall_trace
   
-  def opportunity_identified(self, syscall_trace, que):
-    que.put(syscall_trace)
+  def opportunity_identified(self, syscall_trace, mutator_name, que):
+    que.put((syscall_trace, mutator_name))
 
   def find_syscall_between_indexes(self, syscalls, start, end, pred_func):
     if start < 0: raise ValueError('Starting index must be > 0')
