@@ -16,8 +16,7 @@ class ReverseTimeMutator(GenericMutator):
     while True:
       syscall_trace = self.next_syscall("ReverseTimeMutator", tm, thread_condition, producer)
       if not syscall_trace:
-          print("Breaking------")
-          break
+          return
       elif syscall_trace['syscall'].name == 'time':
         self.opportunity_identified(syscall_trace, que)
   

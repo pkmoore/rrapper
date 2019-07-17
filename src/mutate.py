@@ -7,6 +7,7 @@ import TraceManager
 import Producer
 import Queue
 import threading
+import time
 
 from posix_omni_parser import Trace
 from mutator.Null import NullMutator                        # noqa: F401
@@ -45,35 +46,29 @@ def mutate(name, mutators, verbosity):
 
     # Instantiating producer
     producer = Producer.Producer(test_dir + consts.STRACE_DEFAULT, pickle_file, trace_manager)
-    producer_thread = threading.Thread(target=producer.produce, args=(producing_syscall,))
+    producer_thread = threading.Thread(target=producer.produce, name='producer', args=(producing_syscall,))
     producer_thread.start()
-
-   # producer_thread.join()
-   # for syscall in trace_manager.syscall_objects:
-   #   print('===========')
-   #   print(syscall)
-   # sys.exit(0)
-
 
     # Instantiating consumers
     mutator_threads = [] 
     for mutator in mutators:
       identify_mutator = eval(mutator)
       thread = threading.Thread(target=identify_mutator.identify_lines,
-              args=(trace_manager, opportunities, producing_syscall, producer_thread))
+              name='mutator', args=(trace_manager, opportunities, producing_syscall, producer_thread))
+      trace_manager.register_mutator(mutator.strip('()'))
       thread.start()
       mutator_threads.append(thread)
-      trace_manager.register_mutator(mutator.strip('()'))
    
     while mutator_threads[0].isAlive() or not opportunities.empty():
       print('----------')
-      print(opportunities.get(True, 1))
+      try:
+        print(opportunities.get(True, 1))
+      except Queue.Empty:
+        continue
       print('**********')
 
         
     sys.exit(0)
-
-   # sections = config.sections()
 
    # config_number = 0
    # while not opportunities.empty():

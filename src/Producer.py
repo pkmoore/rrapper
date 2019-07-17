@@ -43,15 +43,13 @@ class Producer:
 
       # before updating and deleting the syscall_objects simultaneously, first add an
       # intial amount of syscall_objects to the trace_manager
-      for i in range(3000):
+      for i in range(10):
         with thread_condition:
           try:
             trace_line = fh.next()
           except StopIteration:
-            print("DEAD")
             thread_condition.notify_all()
             return
-            print("DEAD")
           syscall = self.parser.parse_line(trace_line)
           self.trace_manager.syscall_objects.append(syscall)
           self.trace_manager.trace.append(trace_line)
@@ -59,12 +57,10 @@ class Producer:
 
 
       while True:
-        print("INFINITE LOOP")
-        backtrace_limit = 0
+        backtrace_limit = 99999999
         for mutator in self.trace_manager.mutators:
-          if mutator['index'] - 1000 < backtrace_limit:
-            backtrace_limit = mutator['index'] - 1000
-
+          if mutator['index'] - 1 < backtrace_limit:
+            backtrace_limit = mutator['index'] - 1
         if backtrace_limit > 0:
           with thread_condition:
             for i in range(backtrace_limit):
@@ -76,6 +72,7 @@ class Producer:
                 thread_condition.notify_all()
                 return
               self.trace_manager.syscall_objects.append(self.parser.parse_line(trace_line))
+              self.trace_manager.trace.append(trace_line)
               thread_condition.notify()
 
 

@@ -9,16 +9,10 @@ class GenericMutator:
     with thread_condition:
       syscall_trace = tm.next_syscall(calling_mutator)
       if not syscall_trace:
-        if producer.is_alive():
-          for i in threading.enumerate():
-              print(i.name)
-          print(producer.is_alive())
-          print('=====')
-          thread_condition.wait()
-          print('++++')
+        if threading.enumerate()[1].name == 'producer':
+          thread_condition.wait(1)
           return self.next_syscall(calling_mutator, tm, thread_condition, producer)
-        else:
-          return
+        return
       elif not syscall_trace['syscall']:
         return self.next_syscall(calling_mutator, tm, thread_condition, producer)
       return syscall_trace

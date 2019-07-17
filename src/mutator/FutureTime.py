@@ -12,11 +12,10 @@ class FutureTimeMutator(GenericMutator):
         syscalls[k].ret = (syscalls[k].ret[0] + self.seconds, '')
 
 
-  def identify_lines(self, tm, que):
-    while true:
-      v = self.next_syscall()
-      if v is None:
-        break
-      if v.name == 'time':
-        self.opportunity_identified(v, que)
- 
+  def identify_lines(self, tm, que, thread_condition, producer):
+    while True:
+      syscall_trace = self.next_syscall("FutureTimeMutator", tm, thread_condition, producer)
+      if not syscall_trace:
+          return
+      elif syscall_trace['syscall'].name == 'time':
+        self.opportunity_identified(syscall_trace, que)

@@ -21,6 +21,12 @@ class TraceManager:
 
   def register_mutator(self, mutator):
       self.mutators.append({'name': mutator, 'index': 0})
+  
+  def pop_front(self):
+      self.syscall_objects.pop(0)
+      self.trace.pop(0)
+      for mutator in self.mutators:
+          mutator['index'] -= 1
 
   def next_syscall(self, calling_mutator):
       mutator_index = -1
