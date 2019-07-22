@@ -44,13 +44,13 @@ class UnusualFiletypeMutator(GenericMutator):
       if not syscall_trace:
         return
       # fstat takes a file descriptor
-      if syscall_trace.name.startswith('fstat'):
+      if syscall_trace['syscall'].name.startswith('fstat'):
         if self.file_descriptor:
           if self.file_descriptor != syscall_trace.args[0].value:
             continue
         self.opportunity_identified(syscall_trace, self.mutator_name, que)
       # stat and lstat take a name rather than a file descriptor
-      if syscall_trace.name.startswith('stat') or syscall_trace.name.startswith('lstat'):
+      if syscall_trace['syscall'].name.startswith('stat') or syscall_trace['syscall'].name.startswith('lstat'):
         if self.name:
           if self.name != syscall_trace.args[0].value:
             continue
