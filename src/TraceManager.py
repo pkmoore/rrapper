@@ -18,6 +18,7 @@ import sys
 
 class TraceManager:
   def __init__(self):
+    self.producer_running = True
     self.syscall_objects = []
     self.trace = []
     self.mutators = []
@@ -43,7 +44,7 @@ class TraceManager:
       mutator['index'] -= 1
 
 
-  def next_syscall(self, calling_mutator):
+  def next_syscall(self, calling_mutator, sniplen=5):
     """
     <Purpose>
       This method takes in the calling mutator, using its index, this methods
@@ -70,11 +71,20 @@ class TraceManager:
     tmp_index += 1
     try:
       syscall = self.syscall_objects[tmp_index]
-      trace = self.trace[tmp_index]
       event_num = self.trace[tmp_index - 1]
-      syscall_trace_pack = {'syscall': syscall, 'event':event_num, 'trace':trace}
+      trace = []
+      trace.append(self.trace[tmp_index])
     except IndexError:
       return None
+  
+    try:
+      for i in range(1, sniplen):
+        trace.append(self.trace[tmp_index + (i * 2)])
+    except IndexError:
+      if self.producer_running:
+        return None
+
+    syscall_trace_pack = {'syscall': syscall, 'event':event_num, 'trace':trace}
     self.mutators[mutator_index]['index'] += 1
     return syscall_trace_pack
 
@@ -113,4 +123,7 @@ class TraceManager:
       return None
     self.mutators[mutator_index]['index'] -= 1
     return syscall_trace_pack
+
+  def producer_done(self):
+      self.producer_running = False
 

@@ -7,7 +7,7 @@ class GenericMutator:
       syscall_trace = tm.next_syscall(calling_mutator)
       if not syscall_trace:
         if threading.enumerate()[1].name == 'producer':
-          thread_condition.wait(1)
+          thread_condition.wait(0.1)
           return self.next_syscall(calling_mutator, tm, thread_condition)
         return
       elif not syscall_trace['syscall']:

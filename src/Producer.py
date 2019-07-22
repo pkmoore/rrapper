@@ -50,8 +50,8 @@ class Producer:
         try:
           trace_line = fh.next()
         except StopIteration:
-          logging.debug("Incomplete Trace. Trace ended without 'syscall_'")          
-          raise(RuntimeError)
+          logging.debug("Incomplete Trace. Trace ended without 'syscall_'")
+          raise RuntimeError
         syscall = self.parser.parse_line(trace_line)
         if syscall and 'syscall_' in syscall.name:
           break
@@ -64,6 +64,7 @@ class Producer:
           try:
             trace_line = fh.next()
           except StopIteration:
+            self.trace_manager.producer_done()
             thread_condition.notify_all()
             return
           syscall = self.parser.parse_line(trace_line)
@@ -86,11 +87,14 @@ class Producer:
               try:
                 trace_line = fh.next()
               except StopIteration:
+                self.trace_manager.producer_done()
                 thread_condition.notify_all()
                 return
               self.trace_manager.syscall_objects.append(self.parser.parse_line(trace_line))
               self.trace_manager.trace.append(trace_line)
               thread_condition.notify()
+      
+      
 
 
             

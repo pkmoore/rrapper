@@ -15,7 +15,7 @@ from mutator.UnusualFiletype import UnusualFiletypeMutator  # noqa: F401
 
 import consts
 
-def identify_opportunities(name, mutators, verbosity):
+def identify_opportunities(name, mutators, verbosity, sniplen=5):
   # check if config file exists
   test_dir = consts.DEFAULT_CONFIG_PATH + name + "/"
   if not os.path.exists(test_dir):
@@ -58,7 +58,7 @@ def identify_opportunities(name, mutators, verbosity):
   config_number = 0
   while len(threading.enumerate()) > 1 or not opportunities.empty():
     try:
-      identified_opportunity = opportunities.get(True, 1)
+      identified_opportunity = opportunities.get(True, 0.1)
     except Queue.Empty:
       continue
 
@@ -80,8 +80,12 @@ def identify_opportunities(name, mutators, verbosity):
     # the rr event number lines from the main recording STRIPPED OUT.
     lines_written = 0
     with open(test_dir + "trace_snip"+str(config_number)+".strace", 'wb') as snip_file:
-      snip_file.write(syscall_trace_obj['trace'])
-      lines_written += 1
+      for i in range(sniplen):
+        try:
+          snip_file.write(syscall_trace_obj['trace'][i])
+          lines_written += 1
+        except IndexError:
+          break
 
     config.set("request_handling_process"+str(config_number), "trace_file",
         test_dir + "trace_snip"+str(config_number) + ".strace")
