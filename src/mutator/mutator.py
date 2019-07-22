@@ -2,23 +2,22 @@ import tempfile
 import threading
 
 class GenericMutator:
-  def __init__(self):
-    self.oppotunities = []
-
-  def next_syscall(self, calling_mutator, tm, thread_condition, producer):
+  def next_syscall(self, calling_mutator, tm, thread_condition):
     with thread_condition:
       syscall_trace = tm.next_syscall(calling_mutator)
       if not syscall_trace:
         if threading.enumerate()[1].name == 'producer':
           thread_condition.wait(1)
-          return self.next_syscall(calling_mutator, tm, thread_condition, producer)
+          return self.next_syscall(calling_mutator, tm, thread_condition)
         return
       elif not syscall_trace['syscall']:
-        return self.next_syscall(calling_mutator, tm, thread_condition, producer)
+        return self.next_syscall(calling_mutator, tm, thread_condition)
       return syscall_trace
+
   
   def opportunity_identified(self, syscall_trace, mutator_name, que):
     que.put((syscall_trace, mutator_name))
+
 
   def find_syscall_between_indexes(self, syscalls, start, end, pred_func):
     if start < 0: raise ValueError('Starting index must be > 0')

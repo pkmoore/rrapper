@@ -9,6 +9,7 @@ class UnusualFiletypeMutator(GenericMutator):
     self.filetype = filetype
     self.name = name
     self.file_descriptor = file_descriptor
+    self.mutator_name = 'UnusualFiletypeMutator'
 
 
   def mutate_syscalls(self, syscalls):
@@ -37,21 +38,21 @@ class UnusualFiletypeMutator(GenericMutator):
         return k
 
 
-  #def identify_lines(self, tm, que):
-  #  while True:
-  #    v = self.next_syscall()
-  #    if v is None:
-  #      break
-  #    # fstat takes a file descriptor
-  #    if v.name.startswith('fstat'):
-  #      if self.file_descriptor:
-  #        if self.file_descriptor != v.args[0].value:
-  #          continue
-  #      self.opportunity_identified(v, que)
-  #    # stat and lstat take a name rather than a file descriptor
-  #    if v.name.startswith('stat') or v.name.startswith('lstat'):
-  #      if self.name:
-  #        if self.name != v.args[0].value:
-  #          continue
-  #      self.opportunity_identified(v, que)
+  def identify_lines(self, tm, que, thread_condition):
+    while True:
+      syscall_trace = self.next_syscall(self.mutator_name, tm, thread_condition)
+      if not syscall_trace:
+        return
+      # fstat takes a file descriptor
+      if syscall_trace.name.startswith('fstat'):
+        if self.file_descriptor:
+          if self.file_descriptor != syscall_trace.args[0].value:
+            continue
+        self.opportunity_identified(syscall_trace, self.mutator_name, que)
+      # stat and lstat take a name rather than a file descriptor
+      if syscall_trace.name.startswith('stat') or syscall_trace.name.startswith('lstat'):
+        if self.name:
+          if self.name != syscall_trace.args[0].value:
+            continue
+        self.opportunity_identified(syscall_trace, self.mutator_name, que)
 

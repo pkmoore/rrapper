@@ -15,10 +15,10 @@
 
 import sys
 import argparse
-import subprocess
 import logging
-from rrtest import create_test, configure_test, list_test, pack_test, analyze_test 
-from mutate import mutate
+
+from rrtest import create_test
+from identify_opportunities import identify_opportunities
 from rreplay import call_replay
 
 def main():
@@ -30,11 +30,7 @@ def main():
   # if no arguments given
   try:
     sys.argv[1]
-  except:
-    parser.print_help()
-    sys.exit(1)
-
-  if sys.argv[1] == "-h":
+  except IndexError:
     parser.print_help()
     sys.exit(1)
 
@@ -75,8 +71,8 @@ def main():
 
   # configuring the test
   logging.debug("----------configuring test----------")
-  mutate(args.cmd, args.mutator, args.verbosity)
-  
+  identify_opportunities(args.cmd, args.mutator, args.verbosity)
+
   # replay the test
   logging.debug("----------replaying test----------")
   call_replay(args.cmd, args.verbosity)

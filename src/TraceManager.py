@@ -18,12 +18,14 @@ import sys
 
 class TraceManager:
   def __init__(self):
-      self.syscall_objects = []
-      self.trace = []
-      self.mutators = []
+    self.syscall_objects = []
+    self.trace = []
+    self.mutators = []
+    
 
   def register_mutator(self, mutator):
-      self.mutators.append({'name': mutator, 'index': 0})
+    self.mutators.append({'name': mutator, 'index': 0})
+
   
   def pop_front(self):
     """
@@ -39,6 +41,7 @@ class TraceManager:
     self.trace.pop(0)
     for mutator in self.mutators:
       mutator['index'] -= 1
+
 
   def next_syscall(self, calling_mutator):
     """
@@ -75,6 +78,7 @@ class TraceManager:
     self.mutators[mutator_index]['index'] += 1
     return syscall_trace_pack
 
+
   def prev_syscall(self, calling_mutator):
     """
     <Purpose>
@@ -109,5 +113,4 @@ class TraceManager:
       return None
     self.mutators[mutator_index]['index'] -= 1
     return syscall_trace_pack
-
 

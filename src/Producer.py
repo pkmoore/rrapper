@@ -23,11 +23,13 @@ import consts
 
 class Producer:
   def __init__(self, trace_file, pickle_file, tm):
+    # location of tracefile
     self.tracefile = trace_file
     self.trace_manager = tm
     self.parser = StraceParser(self.tracefile, pickle_file)
 
-  def produce(self, thread_condition):
+
+  def produce(self, thread_condition, backlog_size=1000):
     """
     <Purpose>
       This method parses and adds syscalls to the list of syscalls in
@@ -40,14 +42,13 @@ class Producer:
     """
 
     with open(self.tracefile, 'r') as fh:
-      
       # Finding and ignoring everything before 'syscall_'
       while True:
         try:
           trace_line = fh.next()
         except StopIteration:
           logging.debug("Incomplete Trace. Trace ended without 'syscall_'")          
-          sys.exit(1)
+          raise(RuntimeError)
         syscall = self.parser.parse_line(trace_line)
         if syscall and 'syscall_' in syscall.name:
           break
@@ -55,7 +56,7 @@ class Producer:
       # before updating and deleting the syscall_objects simultaneously, first add an
       # intial amount of syscall_objects to the trace_manager in order for
       # mutators to have an initial amout of backlogs
-      for i in range(10):
+      for i in range(backlog_size * 2):
         with thread_condition:
           try:
             trace_line = fh.next()
@@ -71,15 +72,14 @@ class Producer:
       # backlog of the slowest mutator and adds the same number of syscalls to
       # the end
       while True:
-        backtrace_limit = 99999999
+        backtrace_limit = self.trace_manager.mutators[0]['index'] - backlog_size
         for mutator in self.trace_manager.mutators:
-          if mutator['index'] - 1 < backtrace_limit:
-            backtrace_limit = mutator['index'] - 1
+          if mutator['index'] - backlog_size < backtrace_limit:
+            backtrace_limit = mutator['index'] - backlog_size
         if backtrace_limit > 0:
           with thread_condition:
             for i in range(backtrace_limit):
               self.trace_manager.pop_front()
-            for i in range(backtrace_limit):
               try:
                 trace_line = fh.next()
               except StopIteration:
