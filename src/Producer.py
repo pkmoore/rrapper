@@ -29,7 +29,7 @@ class Producer:
     self.parser = StraceParser(self.tracefile, pickle_file)
 
 
-  def produce(self, thread_condition, backlog_size=1000):
+  def produce(self, thread_condition, backlog_size=None):
     """
     <Purpose>
       This method parses and adds syscalls to the list of syscalls in
@@ -40,6 +40,9 @@ class Producer:
       None
 
     """
+
+    if not backlog_size:
+      backlog_size = consts.BACKLOG_SIZE
 
     with open(self.tracefile, 'r') as fh:
       # Finding and ignoring everything before 'syscall_'

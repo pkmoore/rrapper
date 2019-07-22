@@ -33,3 +33,6 @@ RR_PIPE = "rrdump_proc.pipe"
 
 # represents name of output file written to by replay
 PROC_FILE = "proc.out"
+
+# represents the max length of backlog of each mutator
+BACKLOG_SIZE = 1000
