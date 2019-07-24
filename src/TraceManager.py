@@ -20,13 +20,14 @@ import string
 import exceptions
 import consts
 
+
 class TraceManager:
   def __init__(self):
     self.producer_running = True
     self.syscall_objects = []
     self.trace = []
     self.mutators = []
-    
+
 
   def register_mutator(self, mutator):
     """
@@ -55,7 +56,7 @@ class TraceManager:
       result = result + random.choice(char)
     return result
 
-  
+
   def pop_front(self):
     """
     <Purpose>
@@ -87,16 +88,18 @@ class TraceManager:
     # Checking if calling mutator is in the list of registered mutators
     mutator_index = self._checking_mutator(calling_mutator)
 
-    # Get the next syscall if possible, if reaching the end of list, return None
+    # Retrieve the calling mutator's current index into the syscall trace
+    # so we can grab the next syscall it is supposed to receive.
     index = self.mutators[mutator_index]['index']
     try:
+      # Based on the mutator's incremented index, try to grab the next system call and event number
       syscall = self.syscall_objects[index]
       event_num = self.trace[index][0]
       trace = []
       trace.append(self.trace[index][1])
     except IndexError:
       return None
-  
+
     try:
       for i in range(1, sniplen):
         trace.append(self.trace[index + i][1])
@@ -104,7 +107,7 @@ class TraceManager:
       if self.producer_running:
         return None
 
-    syscall_trace_pack = {'syscall': syscall, 'event':event_num, 'trace':trace}
+    syscall_trace_pack = {'syscall': syscall, 'event': event_num, 'trace': trace}
     self.mutators[mutator_index]['index'] += 1
     return syscall_trace_pack
 
@@ -155,8 +158,6 @@ class TraceManager:
       logging.debug('mutator %s, is not in the list of registered mutators', calling_mutator)
       raise exceptions.MutatorError('Mutator {} not found in registered mutators'.format(calling_mutator))
     return mutator_index
-      
 
   def producer_done(self):
       self.producer_running = False
-

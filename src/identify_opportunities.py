@@ -15,12 +15,12 @@ from mutator.UnusualFiletype import UnusualFiletypeMutator  # noqa: F401
 
 import consts
 
+
 def identify_opportunities(name, mutators, verbosity, sniplen=5):
   # check if config file exists
   test_dir = consts.DEFAULT_CONFIG_PATH + name + "/"
   if not os.path.exists(test_dir):
-    print("Test '{}' does not exist. Create before attempting to configure!" \
-            .format(name))
+    print("Test '{}' does not exist. Create before attempting to configure!" .format(name))
     return 0
 
   # read config file for rr test directory
@@ -51,11 +51,16 @@ def identify_opportunities(name, mutators, verbosity, sniplen=5):
     identify_mutator = eval(mutator)
     trace_manager.register_mutator(identify_mutator)
     thread = threading.Thread(target=identify_mutator.identify_lines,
-        name='mutator', args=(trace_manager, opportunities, producing_syscall))
+                              name='mutator',
+                              args=(trace_manager,
+                                    opportunities,
+                                    producing_syscall))
     thread.start()
     mutator_threads.append(thread)
 
   config_number = 0
+  # Keep trying to pop off new opportunities and write them to the config file
+  # as long as we have threads still running or opportunities still in the queue.
   while len(threading.enumerate()) > 1 or not opportunities.empty():
     try:
       identified_opportunity = opportunities.get(True, 0.1)
@@ -63,14 +68,13 @@ def identify_opportunities(name, mutators, verbosity, sniplen=5):
       continue
 
     syscall_trace_obj = identified_opportunity[0]
-    config.add_section("request_handling_process"+str(config_number))
-    config.set("request_handling_process"+str(config_number), "event", None)
-    config.set("request_handling_process"+str(config_number), "pid", None)
-    config.set("request_handling_process"+str(config_number), "trace_file", test_dir + consts.STRACE_DEFAULT)
-    config.set("request_handling_process"+str(config_number), "trace_start", 0)
-    config.set("request_handling_process"+str(config_number), "trace_end", 0)
-    config.set("request_handling_process"+str(config_number), "mutator",
-        identified_opportunity[1]+'()')
+    config.add_section("request_handling_process" + str(config_number))
+    config.set("request_handling_process" + str(config_number), "event", None)
+    config.set("request_handling_process" + str(config_number), "pid", None)
+    config.set("request_handling_process" + str(config_number), "trace_file", test_dir + consts.STRACE_DEFAULT)
+    config.set("request_handling_process" + str(config_number), "trace_start", 0)
+    config.set("request_handling_process" + str(config_number), "trace_end", 0)
+    config.set("request_handling_process" + str(config_number), "mutator", identified_opportunity[1] + '()')
 
     event_line = syscall_trace_obj['event']
     user_event = int(event_line.split('+++ ')[1].split(' +++')[0])
@@ -79,7 +83,7 @@ def identify_opportunities(name, mutators, verbosity, sniplen=5):
     # This snip will be sniplen (default 1) system calls in length and will have
     # the rr event number lines from the main recording STRIPPED OUT.
     lines_written = 0
-    with open(test_dir + "trace_snip"+str(config_number)+".strace", 'wb') as snip_file:
+    with open(test_dir + "trace_snip" + str(config_number) + ".strace", 'wb') as snip_file:
       for i in range(sniplen):
         try:
           snip_file.write(syscall_trace_obj['trace'][i])
@@ -87,11 +91,10 @@ def identify_opportunities(name, mutators, verbosity, sniplen=5):
         except IndexError:
           break
 
-    config.set("request_handling_process"+str(config_number), "trace_file",
-        test_dir + "trace_snip"+str(config_number) + ".strace")
-    config.set("request_handling_process"+str(config_number), "event", user_event)
-    config.set("request_handling_process"+str(config_number), "pid", pid)
-    config.set("request_handling_process"+str(config_number), "trace_end", lines_written)
+    config.set("request_handling_process" + str(config_number), "trace_file", test_dir + "trace_snip" + str(config_number) + ".strace")
+    config.set("request_handling_process" + str(config_number), "event", user_event)
+    config.set("request_handling_process" + str(config_number), "pid", pid)
+    config.set("request_handling_process" + str(config_number), "trace_end", lines_written)
 
     # write final changes to config file
     with open(test_dir + "config.ini", 'w+') as config_file:

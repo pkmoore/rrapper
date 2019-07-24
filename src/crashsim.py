@@ -21,6 +21,7 @@ from rrtest import create_test
 from identify_opportunities import identify_opportunities
 from rreplay import call_replay
 
+
 def main():
   # initialize parser
   parser = argparse.ArgumentParser()
@@ -76,6 +77,7 @@ def main():
   # replay the test
   logging.debug("----------replaying test----------")
   call_replay(args.cmd, args.verbosity)
+
 
 if __name__ == "__main__":
   main()

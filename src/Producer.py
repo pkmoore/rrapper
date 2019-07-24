@@ -15,12 +15,12 @@
 """
 
 import logging
-import sys
 
 from posix_omni_parser.parsers.StraceParser import StraceParser
 
 import consts
 import exceptions
+
 
 class Producer:
   def __init__(self, trace_file, pickle_file, tm):
@@ -97,8 +97,3 @@ class Producer:
               self.trace_manager.syscall_objects.append(self.parser.parse_line(trace_line))
               self.trace_manager.trace.append((event_line, trace_line))
               thread_condition.notify()
-      
-      
-
-
-            
