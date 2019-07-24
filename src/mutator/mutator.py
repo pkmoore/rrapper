@@ -1,6 +1,7 @@
 import tempfile
 import threading
 
+
 class GenericMutator:
   def __init__():
       self.id == None
@@ -15,7 +16,7 @@ class GenericMutator:
         return
       return syscall_trace
 
-  
+
   def opportunity_identified(self, syscall_trace, mutator_name, que):
     que.put((syscall_trace, mutator_name))
 
@@ -25,11 +26,16 @@ class GenericMutator:
 
 
   def find_syscall_between_indexes(self, syscalls, start, end, pred_func):
-    if start < 0: raise ValueError('Starting index must be > 0')
-    if end < 0: raise ValueError('Ending index must be > 0')
-    if start == end: raise ValueError('starting index must not equal ending index')
-    if end > len(syscalls): raise ValueError('end index must be < len(syscalls)')
-    if not callable(pred_func): raise TypeError('pred_func must be callable')
+    if start < 0:
+      raise ValueError('Starting index must be > 0')
+    if end < 0:
+      raise ValueError('Ending index must be > 0')
+    if start == end:
+      raise ValueError('starting index must not equal ending index')
+    if end > len(syscalls):
+      raise ValueError('end index must be < len(syscalls)')
+    if not callable(pred_func):
+      raise TypeError('pred_func must be callable')
 
     indexes = []
     for index, line in enumerate(syscalls):
@@ -40,6 +46,7 @@ class GenericMutator:
         indexes.append(index + start)
 
     return indexes
+
 
 class Stat64FiletypeMutator:
     def __init__(self, filename, filetype):
@@ -62,14 +69,14 @@ class Stat64FiletypeMutator:
         return 'stat64' in line and self.filename in line
 
     def mutate_line(self, line):
-        return line.replace('st_mode=S_IFREG', 'st_mode='+self.filetype, 1)
+        return line.replace('st_mode=S_IFREG', 'st_mode=' + self.filetype, 1)
 
 
 class ConnectMutator(GenericMutator):
     """
     <Purpose>
       Implementation of a mutator that alters connect calls
-      by overwriting the communication domain as 
+      by overwriting the communication domain as
       another user-specified one.
     """
 
@@ -78,11 +85,11 @@ class ConnectMutator(GenericMutator):
         <Purpose>
           Initialize the mutator object with an original commuication domain
           string and a target communication domain string
-        
+
             i.e
                 connect(4, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("10.0.2.3")}, 16) = 0
                 connect(4, {sa_family=AF_UNIX, sin_port=htons(53), sin_addr=inet_addr("10.0.2.3")}, 16) = 0
-        
+
         """
         self.orig_domain = orig_domain
         self.domain = domain
