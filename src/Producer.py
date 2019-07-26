@@ -20,6 +20,7 @@ import sys
 from posix_omni_parser.parsers.StraceParser import StraceParser
 
 import consts
+import exceptions
 
 class Producer:
   def __init__(self, trace_file, pickle_file, tm):
@@ -51,17 +52,19 @@ class Producer:
           trace_line = fh.next()
         except StopIteration:
           logging.debug("Incomplete Trace. Trace ended without 'syscall_'")
-          raise RuntimeError
+          raise exceptions.ProducerError('Syscall_ not found in Trace. Incompletet Trace?')
         syscall = self.parser.parse_line(trace_line)
         if syscall and 'syscall_' in syscall.name:
           break
 
-      # before updating and deleting the syscall_objects simultaneously, first add an
-      # intial amount of syscall_objects to the trace_manager in order for
-      # mutators to have an initial amout of backlogs
-      for i in range(backlog_size * 2):
+      # Adding an initial amount of traces to the list so the indexes of mutators
+      # can advance. This is requried otherwise mutator will have no trace to
+      # identify and the next loop will be can infinite loop due to the
+      # if backtrace_limit > 0
+      for i in range(0, backlog_size * 4, 2):
         with thread_condition:
           try:
+            event_line = fh.next()
             trace_line = fh.next()
           except StopIteration:
             self.trace_manager.producer_done()
@@ -69,29 +72,30 @@ class Producer:
             return
           syscall = self.parser.parse_line(trace_line)
           self.trace_manager.syscall_objects.append(syscall)
-          self.trace_manager.trace.append(trace_line)
+          self.trace_manager.trace.append((event_line, trace_line))
           thread_condition.notify()
 
       # This part is the updating window. It deletes everything before the
       # backlog of the slowest mutator and adds the same number of syscalls to
       # the end
       while True:
-        backtrace_limit = self.trace_manager.mutators[0]['index'] - backlog_size
-        for mutator in self.trace_manager.mutators:
-          if mutator['index'] - backlog_size < backtrace_limit:
-            backtrace_limit = mutator['index'] - backlog_size
-        if backtrace_limit > 0:
-          with thread_condition:
+        with thread_condition:
+          backtrace_limit = self.trace_manager.mutators[0]['index'] - backlog_size
+          for mutator in self.trace_manager.mutators:
+            if mutator['index'] - backlog_size < backtrace_limit:
+              backtrace_limit = mutator['index'] - backlog_size
+          if backtrace_limit > 0:
             for i in range(backtrace_limit):
               self.trace_manager.pop_front()
               try:
+                event_line = fh.next()
                 trace_line = fh.next()
               except StopIteration:
                 self.trace_manager.producer_done()
                 thread_condition.notify_all()
                 return
               self.trace_manager.syscall_objects.append(self.parser.parse_line(trace_line))
-              self.trace_manager.trace.append(trace_line)
+              self.trace_manager.trace.append((event_line, trace_line))
               thread_condition.notify()
       
       

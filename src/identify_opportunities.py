@@ -49,7 +49,7 @@ def identify_opportunities(name, mutators, verbosity, sniplen=5):
   mutator_threads = []
   for mutator in mutators:
     identify_mutator = eval(mutator)
-    trace_manager.register_mutator(identify_mutator.mutator_name)
+    trace_manager.register_mutator(identify_mutator)
     thread = threading.Thread(target=identify_mutator.identify_lines,
         name='mutator', args=(trace_manager, opportunities, producing_syscall))
     thread.start()

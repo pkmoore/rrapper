@@ -40,7 +40,7 @@ class UnusualFiletypeMutator(GenericMutator):
 
   def identify_lines(self, tm, que, thread_condition):
     while True:
-      syscall_trace = self.next_syscall(self.mutator_name, tm, thread_condition)
+      syscall_trace = self.next_syscall(tm, thread_condition)
       if not syscall_trace:
         return
       # fstat takes a file descriptor
