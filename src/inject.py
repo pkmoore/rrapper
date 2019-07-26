@@ -48,11 +48,7 @@ from syscallreplay import multiplex_handlers
 from syscallreplay import util
 from syscallreplay.util import ReplayDeltaError
 
-from mutator.Null import NullMutator
-from mutator.UnusualFiletype import UnusualFiletypeMutator
-from mutator.ReverseTime import ReverseTimeMutator
-from mutator.FutureTime import FutureTimeMutator
-from mutator.CrossdiskRename import CrossdiskRenameMutator
+from Mutators import *
 
 logger = logging.getLogger('root')
 
@@ -465,7 +461,7 @@ def exit_with_status(pid, code, mutator, event, index = 0):
     None
 
   """
-  mut = re.findall(r'src.mutator.\w+.(\w+)', mutator)
+  mut = re.findall(r'src.Mutators.\w+.(\w+)', mutator)
   error = int(event) + int(index)
 
   _kill_parent_process(pid)
