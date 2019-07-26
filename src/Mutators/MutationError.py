@@ -1,0 +1,2 @@
+class MutationError(RuntimeError):
+  pass
