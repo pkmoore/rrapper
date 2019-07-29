@@ -48,7 +48,7 @@ from syscallreplay import multiplex_handlers
 from syscallreplay import util
 from syscallreplay.util import ReplayDeltaError
 
-from Mutators import *
+from mutator import *
 
 logger = logging.getLogger('root')
 
@@ -461,7 +461,7 @@ def exit_with_status(pid, code, mutator, event, index = 0):
     None
 
   """
-  mut = re.findall(r'src.Mutators.\w+.(\w+)', mutator)
+  mut = re.findall(r'src.mutator.\w+.(\w+)', mutator)
   error = int(event) + int(index)
 
   _kill_parent_process(pid)
