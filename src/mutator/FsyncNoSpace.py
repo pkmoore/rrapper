@@ -1,7 +1,4 @@
-from posix_omni_parser import Trace
-import sys
 from mutator import GenericMutator
-from ..consts import DEFAULT_CONFIG_PATH
 
 class FsyncNoSpaceMutator(GenericMutator):
 
