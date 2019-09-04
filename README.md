@@ -7,7 +7,7 @@ It comprises of several important components that make work together to ensure s
 
 ## 2.0 Requirements
 
-* Linux-based Operating System using a ≥ 3.11.x kernel
+* 32-bit Linux-based Operating System using a ≥ 3.11.x kernel. (64-bit support is coming)
 
 ```
 $ uname --kernel-release
