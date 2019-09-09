@@ -134,7 +134,7 @@ crashsim <testname> --command="<command or executable>" --mutator="<mutator cons
 e.g.
 
 ```
-crashsim testmyapp --command="myapp -h -t -c100" --mutator="UnusualFiletypeMutator(S_IFCHR)"
+crashsim testmyapp --command="myapp -h -t -c100" --mutator="UnusualFiletypeMutator('S_IFCHR')"
 ```
 Expected output:
 ```
