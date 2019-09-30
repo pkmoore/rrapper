@@ -52,6 +52,11 @@ def main():
                                dest='force',
                                default='YES',
                                help='force overwrite creation of the test')
+  test_name.add_argument('-i', '--identify-only',
+                               dest='identify_only',
+                               default=False,
+                               help='Only identify opportunities.  Don\'t '
+                                    'perform simulation.')
 
   # general flags to be set
   parser.add_argument('-v', '--verbosity',
@@ -75,8 +80,11 @@ def main():
   identify_opportunities(args.cmd, args.mutator, args.verbosity)
 
   # replay the test
-  logging.debug("----------replaying test----------")
-  call_replay(args.cmd, args.verbosity)
+  if not args.identify_only:
+    logging.debug("----------replaying test----------")
+    call_replay(args.cmd, args.verbosity)
+  else:
+    logging.debug('-i/--identify-only specified.  Not simulating.')
 
 
 if __name__ == "__main__":
