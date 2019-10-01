@@ -12,6 +12,8 @@ from mutator.CrossdiskRename import CrossdiskRenameMutator  # noqa: F401
 from mutator.FutureTime import FutureTimeMutator            # noqa: F401
 from mutator.ReverseTime import ReverseTimeMutator          # noqa: F401
 from mutator.UnusualFiletype import UnusualFiletypeMutator  # noqa: F401
+from mutator.Delay import DelayMutator                      # noqa: F401
+from mutator.ASAP import ASAPMutator                        # noqa: F401
 
 import consts
 
